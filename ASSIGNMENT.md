@@ -81,7 +81,7 @@ Stryker 4.13.0 was run with the same command and mutation filter on the original
 All 52 tested mutants were killed; five mutants had no test coverage. The report is retained locally under `StrykerOutput/approval-only-final-5/`.
 
 ## PR review findings and verdicts
-Pull request: pending publication. The direct review covered the approval service, role guards, UI progress hint, unit tests, Playwright rejection flow, and Copilot interaction logger.
+Feature branch published: [feat/invoice-approval-limits](https://github.com/Utkarsh-Mahajan/ai-sdlc-demo-app/tree/feat/invoice-approval-limits). Pull request: not created. GitHub rejected the attempt to open a PR against `NITIN1670/ai-sdlc-demo-app` with a `CreatePullRequest` permission error. A maintainer must enable external PRs or grant the required permission. The direct review covered the approval service, role guards, UI progress hint, unit tests, Playwright rejection flow, and Copilot interaction logger.
 
 | # | Finding | Verdict |
 |---|---------|--------|
@@ -108,4 +108,4 @@ The log includes manually structured summaries. Logger tests passed, but live VS
 Video link: pending upload in this environment. No valid public upload or verified link was produced here, so this section intentionally avoids inventing a file or URL.
 
 ## Notes
-The code and local verification evidence are present. Publishing a pull request and uploading the required demo video remain external submission steps; this environment did not produce or verify a video link.
+The code and local verification evidence are present, and the feature branch is published. Pull-request creation is blocked by upstream GitHub permissions. Uploading the required demo video remains a human submission step; this environment did not produce or verify a video link.
