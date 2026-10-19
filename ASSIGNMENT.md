@@ -78,14 +78,15 @@ Stryker 4.13.0 was run with the same command and mutation filter on the original
 | Feature branch | 19 | 52 | 0 | 5 | 91.23% |
 
 - Timeout: 0
-All 52 tested mutants were killed; five mutants had no test coverage. The report is retained locally under `StrykerOutput/approval-only-final-5/`.
+All 52 tested mutants were killed; five mutants had no test coverage. The generated report was removed during workspace cleanup; the scores and mutant counts above were recorded from the completed run.
 
 ## PR review findings and verdicts
-Feature branch published: [feat/invoice-approval-limits](https://github.com/Utkarsh-Mahajan/ai-sdlc-demo-app/tree/feat/invoice-approval-limits). Pull request: not created. GitHub rejected the attempt to open a PR against `NITIN1670/ai-sdlc-demo-app` with a `CreatePullRequest` permission error. A maintainer must enable external PRs or grant the required permission. The direct review covered the approval service, role guards, UI progress hint, unit tests, Playwright rejection flow, and Copilot interaction logger.
+Feature branch published: [feat/invoice-approval-limits](https://github.com/Utkarsh-Mahajan/ai-sdlc-demo-app/tree/feat/invoice-approval-limits). Pull request: [#1](https://github.com/Utkarsh-Mahajan/ai-sdlc-demo-app/pull/1), opened against `main` on the user's fork in accordance with the assignment. The upstream repository did not grant this account permission to create a PR there. The review followed `.github/prompts/review-approval-change.prompt.md` against PR head `91dc83598c529cf13f5513f65acb4f49ec3e2d3d` and compared the relevant code with `AGENTS.md`, the OpenSpec acceptance criteria, and the assignment. Scope included approval transitions, role guards, UI progress hint, unit tests, Playwright rejection flow, Copilot customizations, and interaction logger. The PR description records the finding and verdict.
 
 | # | Finding | Verdict |
 |---|---------|--------|
-| 1 | `record_for` ignored the documented `event_type` field for manual assistant-response entries, causing the CLI-accepted event to be recorded as unknown without its response. | Fixed by accepting `event_type` in the record builder and adding a regression test. |
+| 1 | `.github/hooks/interaction_log.py`: `record_for` ignored the documented `event_type` field for manual assistant-response entries, causing the CLI-accepted event to be recorded as unknown without its response. | Fixed by accepting `event_type` in the record builder and adding a regression test; all four logger tests pass. |
+| — | No other actionable correctness issue found in the reviewed PR scope. | No change required. |
 
 ## AI log
 The assignment log is maintained at:
@@ -102,10 +103,10 @@ cd ai-sdlc-demo-app
 python3 -m unittest discover -s .github/hooks -p 'test_*.py'
 ```
 Result: 4 tests ran, all passed.
-The log includes manually structured summaries. Logger tests passed, but live VS Code hook activation and a full chat transcript export were not verified in this session.
+The log includes manually structured summaries and a clearly labeled retrospective summary; it is not a verbatim or complete transcript. The logger was tested with its unit suite and a sample Copilot-format hook payload, but live VS Code hook activation was not verified. A session-context summary was available for this active Copilot session; a full VS Code transcript export was not available in this environment.
 
 ## Demo video
 Video link: pending upload in this environment. No valid public upload or verified link was produced here, so this section intentionally avoids inventing a file or URL.
 
 ## Notes
-The code and local verification evidence are present, and the feature branch is published. Pull-request creation is blocked by upstream GitHub permissions. Uploading the required demo video remains a human submission step; this environment did not produce or verify a video link.
+The code and local verification evidence are present, and the feature branch and PR are published on the user's fork. The PR body includes the review finding and verdict. Uploading the required demo video remains a human submission step; this environment did not produce or verify a video link.
