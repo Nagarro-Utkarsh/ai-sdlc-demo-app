@@ -8,10 +8,10 @@
 
 ## 2. High-Value Two-Approver Flow
 
-- [ ] 2.1 Record a Manager's first approval for amounts above 500,000 while leaving the invoice pending; verify a unit test checks the first approver and unchanged final-decision fields.
-- [ ] 2.2 Require a distinct Director as the second approver and reject a Director-first attempt; verify unit tests cover the valid sequence, same-user attempt, and wrong-role attempts.
-- [ ] 2.3 Ensure every rejected second-approval attempt leaves the complete invoice unchanged and surfaces a clear API/UI reason; verify with state-snapshot assertions and API tests.
-- [ ] 2.4 Add one Playwright test for a rejected over-limit approval and verify the alert is visible and the invoice state is unchanged through the UI.
+- [x] 2.1 Record a Manager's first approval for amounts above 500,000 while leaving the invoice pending; verify a unit test checks the first approver and unchanged final-decision fields.
+- [x] 2.2 Require a distinct Director as the second approver and reject a Director-first attempt; verify unit tests cover the valid sequence, same-user attempt, and wrong-role attempts.
+- [x] 2.3 Ensure every rejected second-approval attempt leaves the complete invoice unchanged and surfaces a clear API/UI reason; verify with state-snapshot assertions and the Playwright rejection-flow test.
+- [x] 2.4 Add one Playwright test for a rejected over-limit approval and verify the alert is visible and the invoice state is unchanged through the UI.
 
 ## 3. Integration Evidence
 

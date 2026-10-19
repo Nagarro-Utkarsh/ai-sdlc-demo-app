@@ -85,6 +85,106 @@ public class ApprovalServiceTests
     }
 
     [Fact]
+    public void Approve_HighValueInvoice_ManagerFirstLeavesInvoicePendingAndRecordsFirstApproval()
+    {
+        var invoice = InvoiceWith("INV-1", InvoiceStatus.PendingApproval, 600_000m);
+        var service = ServiceFor(invoice);
+
+        var result = service.Approve("INV-1", "demo.manager", ApprovalRole.Manager);
+
+        Assert.Equal(InvoiceStatus.PendingApproval, result.Status);
+        Assert.Equal("demo.manager", result.FirstApprovalBy);
+        Assert.NotNull(result.FirstApprovalAt);
+        Assert.Null(result.DecidedBy);
+        Assert.Null(result.DecidedAt);
+    }
+
+    [Fact]
+    public void Approve_HighValueInvoice_DirectorSecondApprovesInvoice()
+    {
+        var invoice = InvoiceWith("INV-1", InvoiceStatus.PendingApproval, 600_000m);
+        invoice.FirstApprovalBy = "demo.manager";
+        invoice.FirstApprovalAt = DateTime.UtcNow.AddMinutes(-1);
+        var service = ServiceFor(invoice);
+
+        var result = service.Approve("INV-1", "demo.director", ApprovalRole.Director);
+
+        Assert.Equal(InvoiceStatus.Approved, result.Status);
+        Assert.Equal("demo.director", result.SecondApprovalBy);
+        Assert.NotNull(result.SecondApprovalAt);
+        Assert.Equal("demo.director", result.DecidedBy);
+        Assert.NotNull(result.DecidedAt);
+    }
+
+    [Fact]
+    public void Approve_HighValueInvoice_DirectorFirstAttempt_RejectsWithoutChangingInvoice()
+    {
+        var invoice = InvoiceWith("INV-1", InvoiceStatus.PendingApproval, 600_000m);
+        invoice.DecidedBy = "existing user";
+        invoice.DecisionNote = "existing note";
+        var before = Snapshot(invoice);
+        var service = ServiceFor(invoice);
+
+        var error = Assert.Throws<InvalidOperationException>(
+            () => service.Approve("INV-1", "demo.director", ApprovalRole.Director));
+
+        Assert.Contains("prior Manager approval", error.Message);
+        Assert.Equal(before, Snapshot(invoice));
+    }
+
+    [Fact]
+    public void Approve_HighValueInvoice_SameUserSecondAttempt_RejectsWithoutChangingInvoice()
+    {
+        var invoice = InvoiceWith("INV-1", InvoiceStatus.PendingApproval, 600_000m);
+        invoice.FirstApprovalBy = "demo.manager";
+        invoice.FirstApprovalAt = DateTime.UtcNow.AddMinutes(-1);
+        invoice.DecidedBy = "existing user";
+        invoice.DecisionNote = "existing note";
+        var before = Snapshot(invoice);
+        var service = ServiceFor(invoice);
+
+        var error = Assert.Throws<InvalidOperationException>(
+            () => service.Approve("INV-1", "DEMO.MANAGER", ApprovalRole.Director));
+
+        Assert.Contains("different Director", error.Message);
+        Assert.Equal(before, Snapshot(invoice));
+    }
+
+    [Fact]
+    public void Approve_HighValueInvoice_DifferentManagerSecondAttempt_RejectsWithoutChangingInvoice()
+    {
+        var invoice = InvoiceWith("INV-1", InvoiceStatus.PendingApproval, 600_000m);
+        invoice.FirstApprovalBy = "demo.manager";
+        invoice.FirstApprovalAt = DateTime.UtcNow.AddMinutes(-1);
+        var before = Snapshot(invoice);
+        var service = ServiceFor(invoice);
+
+        var error = Assert.Throws<InvalidOperationException>(
+            () => service.Approve("INV-1", "another.manager", ApprovalRole.Manager));
+
+        Assert.Contains("different Manager", error.Message);
+        Assert.Equal(before, Snapshot(invoice));
+    }
+
+    [Fact]
+    public void Reject_AfterHighValueFirstApproval_PreservesFirstApproval()
+    {
+        var invoice = InvoiceWith("INV-1", InvoiceStatus.PendingApproval, 600_000m);
+        invoice.FirstApprovalBy = "demo.manager";
+        invoice.FirstApprovalAt = DateTime.UtcNow.AddMinutes(-1);
+        var service = ServiceFor(invoice);
+
+        var result = service.Reject("INV-1", "demo.admin", "Supporting documents are missing");
+
+        Assert.Equal(InvoiceStatus.Rejected, result.Status);
+        Assert.Equal("demo.manager", result.FirstApprovalBy);
+        Assert.NotNull(result.FirstApprovalAt);
+        Assert.Equal("demo.admin", result.DecidedBy);
+        Assert.Equal("Supporting documents are missing", result.DecisionNote);
+        Assert.NotNull(result.DecidedAt);
+    }
+
+    [Fact]
     public void Approve_RejectsInvoiceThatIsStillADraft()
     {
         var service = ServiceFor(InvoiceWith("INV-1", InvoiceStatus.Draft));
@@ -126,6 +226,10 @@ public class ApprovalServiceTests
         invoice.Amount,
         invoice.Status,
         invoice.CreatedAt,
+        invoice.FirstApprovalBy,
+        invoice.FirstApprovalAt,
+        invoice.SecondApprovalBy,
+        invoice.SecondApprovalAt,
         invoice.DecidedBy,
         invoice.DecidedAt,
         invoice.DecisionNote
