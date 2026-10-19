@@ -27,10 +27,21 @@ These are demo accounts for a local, in-memory app. They are not real credential
 Managers may singly approve invoices up to 50,000; Directors may singly approve up to 500,000. Invoices above 500,000 require a Manager's approval followed by a different Director's approval.
 Invoices move through Draft, Pending Approval, then Approved or Rejected.
 
+For an invoice above 500,000, the first Manager approval leaves it pending and records the first approver. A different Director must provide the second approval to complete it. Rejected approval attempts return a reason without changing invoice state.
+
 ## Tests
 
 ```
 dotnet test backend/InvoiceApp.sln
+```
+
+Run the browser end-to-end test with:
+
+```
+cd e2e
+npm ci
+npx playwright install chromium
+npm test
 ```
 
 ## Project layout
@@ -48,6 +59,14 @@ AGENTS.md                 conventions for AI coding agents
 ## GitHub Copilot workflow
 
 Open this repository as the VS Code workspace and select the Copilot agent harness. Project instructions and reusable Copilot agents, prompts, skills, and hooks live under `.github/`. See [docs/AI_INTERACTION_LOG.md](docs/AI_INTERACTION_LOG.md) for logging behavior and the limits of automatic response capture.
+
+## Assignment submission
+
+- [Assignment write-up and verification evidence](ASSIGNMENT.md)
+- [OpenSpec approval proposal and acceptance criteria](openspec/changes/invoice-approval-limits/)
+- [Pull request to the intended assignment fork](https://github.com/Nagarro-Utkarsh/ai-sdlc-demo-app/pull/1)
+
+The PR targets `main` in `Nagarro-Utkarsh/ai-sdlc-demo-app`; its current GitHub author is the authenticated `Utkarsh-Mahajan` account. GitHub does not allow changing an existing PR's author.
 
 ## Use cases
 
