@@ -81,14 +81,12 @@ public class ApprovalService
     {
         if (role == ApprovalRole.Manager)
         {
-            if (!string.IsNullOrEmpty(invoice.FirstApprovalBy) && invoice.FirstApprovalBy != approver)
+            if (!string.IsNullOrEmpty(invoice.FirstApprovalBy))
             {
-                throw new InvalidOperationException("This invoice already has a first approval from a different Manager.");
-            }
-
-            if (!string.IsNullOrEmpty(invoice.FirstApprovalBy) && invoice.FirstApprovalBy == approver)
-            {
-                throw new InvalidOperationException("A different Director is required for the second approval.");
+                var errorMessage = string.Equals(invoice.FirstApprovalBy, approver, StringComparison.OrdinalIgnoreCase)
+                    ? "A different Director is required for the second approval."
+                    : "This invoice already has a first approval from a different Manager.";
+                throw new InvalidOperationException(errorMessage);
             }
 
             invoice.FirstApprovalBy = approver;
