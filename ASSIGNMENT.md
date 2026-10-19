@@ -24,6 +24,8 @@ The implemented behavior matches the assignment wording:
 - The same user cannot appear as both approvers on the same invoice
 - A rejected attempt returns a clear reason and leaves the invoice unchanged
 
+The existing bulk-approval use case now explicitly preserves these per-invoice role limits and second-approval checks. The partial-approval use case preserves the current role policy and records as an open question whether a future partial-approval decision should use the original or approved amount when applying limits.
+
 ## Verification commands and evidence
 
 1. Unit tests
