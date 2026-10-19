@@ -83,11 +83,12 @@ Stryker 4.13.0 was run with the same command and mutation filter on the original
 All 52 tested mutants were killed; five mutants had no test coverage. The generated report was removed during workspace cleanup; the scores and mutant counts above were recorded from the completed run.
 
 ## PR review findings and verdicts
-Feature branch: [feat/invoice-approval-limits](https://github.com/Nagarro-Utkarsh/ai-sdlc-demo-app/tree/feat/invoice-approval-limits). Submission PR: [Nagarro-Utkarsh/ai-sdlc-demo-app#2](https://github.com/Nagarro-Utkarsh/ai-sdlc-demo-app/pull/2), open against `main` and created by `Nagarro-Utkarsh` from the branch in the `Nagarro-Utkarsh/ai-sdlc-demo-app` repository. The review followed `.github/prompts/review-approval-change.prompt.md` against the PR code diff and compared it with `AGENTS.md`, the OpenSpec acceptance criteria, and the assignment. Scope included approval transitions, role guards, UI progress hint, unit tests, Playwright rejection flow, Copilot customizations, and interaction logger. The code tree was unchanged by the subsequent commit-message-only history rewrite. The PR description records the finding and verdict.
+Feature branch: [feat/invoice-approval-limits](https://github.com/Nagarro-Utkarsh/ai-sdlc-demo-app/tree/feat/invoice-approval-limits). Submission PR: [Nagarro-Utkarsh/ai-sdlc-demo-app#2](https://github.com/Nagarro-Utkarsh/ai-sdlc-demo-app/pull/2), open against `main` and created by `Nagarro-Utkarsh` from the branch in the `Nagarro-Utkarsh/ai-sdlc-demo-app` repository. The review followed `.github/prompts/review-approval-change.prompt.md` against the PR diff and compared it with `AGENTS.md`, the OpenSpec acceptance criteria, and the assignment. Scope included approval transitions, role guards, UI progress hint, unit tests, Playwright rejection flow, Copilot customizations, and interaction logger. The PR description records each finding and verdict.
 
 | # | Finding | Verdict |
 |---|---------|--------|
-| 1 | `.github/hooks/interaction_log.py`: `record_for` ignored the documented `event_type` field for manual assistant-response entries, causing the CLI-accepted event to be recorded as unknown without its response. | Fixed by accepting `event_type` in the record builder and adding a regression test; all four logger tests pass. |
+| 1 | `.github/hooks/interaction_log.py`: `record_for` ignored the documented `event_type` field for manual assistant-response entries, causing the CLI-accepted event to be recorded as unknown without its response. | Fixed by accepting `event_type` in the record builder and adding a regression test. |
+| 2 | `.github/hooks/interaction-log.json`: the versioned Copilot hook file used PascalCase event names, while the Copilot-compatible VS Code/CLI format requires lower-camel names. This could prevent live hooks from being registered. | Fixed the configured event names, normalized Copilot event names in the logger, and added a regression test for the configuration and Copilot event payloads. |
 | — | No other actionable correctness issue found in the reviewed PR scope. | No change required. |
 
 ## AI log
@@ -104,8 +105,8 @@ The logger validation command ran successfully:
 cd ai-sdlc-demo-app
 python3 -m unittest discover -s .github/hooks -p 'test_*.py'
 ```
-Result: 4 tests ran, all passed.
-The log includes manually structured summaries and a clearly labeled retrospective summary; it is not a verbatim or complete transcript. The logger was tested with its unit suite and a sample Copilot-format hook payload, but live VS Code hook activation was not verified. A session-context summary was available for this active Copilot session; a full VS Code transcript export was not available in this environment.
+Result: 7 tests ran, all passed.
+The log includes manually structured summaries and a clearly labeled retrospective summary; it is not a verbatim or complete transcript. The logger was tested with its unit suite and Copilot-format hook payloads, but live VS Code hook activation was not verified. A session-context summary was available for this active Copilot session; a full VS Code transcript export was not available in this environment.
 
 ## Demo video
 Video link: pending upload in this environment. No valid public upload or verified link was produced here, so this section intentionally avoids inventing a file or URL.

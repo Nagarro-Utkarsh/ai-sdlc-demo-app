@@ -1,7 +1,7 @@
 {
   "version": 1,
   "hooks": {
-    "UserPromptSubmit": [
+    "userPromptSubmitted": [
       {
         "type": "command",
         "bash": "python3 .github/hooks/interaction_log.py",
@@ -10,7 +10,7 @@
         "timeoutSec": 5
       }
     ],
-    "PostToolUse": [
+    "postToolUse": [
       {
         "type": "command",
         "bash": "python3 .github/hooks/interaction_log.py",
@@ -19,7 +19,7 @@
         "timeoutSec": 5
       }
     ],
-    "PostToolUseFailure": [
+    "postToolUseFailure": [
       {
         "type": "command",
         "bash": "python3 .github/hooks/interaction_log.py",
@@ -28,7 +28,7 @@
         "timeoutSec": 5
       }
     ],
-    "Stop": [
+    "agentStop": [
       {
         "type": "command",
         "bash": "python3 .github/hooks/interaction_log.py",
@@ -37,7 +37,7 @@
         "timeoutSec": 5
       }
     ],
-    "SubagentStart": [
+    "subagentStart": [
       {
         "type": "command",
         "bash": "python3 .github/hooks/interaction_log.py",
@@ -46,7 +46,7 @@
         "timeoutSec": 5
       }
     ],
-    "SubagentStop": [
+    "subagentStop": [
       {
         "type": "command",
         "bash": "python3 .github/hooks/interaction_log.py",

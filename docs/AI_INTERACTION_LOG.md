@@ -1,8 +1,8 @@
 # AI interaction log
 
-The assignment log is `AI_INTERACTION_LOG.jsonl` at the repository root. Open this repository as the VS Code workspace and use the GitHub Copilot harness for the `.github/hooks/interaction-log.json` hooks to run.
+The assignment log is `AI_INTERACTION_LOG.jsonl` at the repository root. Open this repository as the VS Code workspace, trust it, and select the GitHub Copilot harness. The versioned Copilot hook configuration uses the lower-camel event names required by Copilot-compatible hooks.
 
-The hooks append JSONL records for submitted prompts, successful and failed tool calls, agent stop events, and custom subagent starts/results. The logger redacts values under sensitive field names, common inline secret assignments, bearer values, secret-bearing CLI flags, and URL credentials. The log is local repository content and must be reviewed for secrets before committing or sharing it.
+The hooks append JSONL records for submitted prompts, successful and failed tool calls, agent stop events, and custom subagent starts/results. Copilot's lower-camel event names are normalized to the logger's stable event names. The logger redacts values under sensitive field names, common inline secret assignments, bearer values, secret-bearing CLI flags, and URL credentials. The log is local repository content and must be reviewed for secrets before committing or sharing it.
 
 ## Response-capture limit
 

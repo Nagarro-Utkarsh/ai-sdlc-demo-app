@@ -31,13 +31,29 @@ SECRET_ARGUMENT = re.compile(
 BEARER = re.compile(r"(?i)(\bBearer\s+)[A-Za-z0-9._~+/-]+=*")
 URL_CREDENTIALS = re.compile(r"(?i)(https?://)[^/\s:@]+:[^/\s@]+@")
 KNOWN_EVENTS = {
+    "SessionStart",
+    "SessionEnd",
     "UserPromptSubmit",
+    "PreToolUse",
     "PostToolUse",
     "PostToolUseFailure",
     "Stop",
     "SubagentStart",
     "SubagentStop",
+    "ErrorOccurred",
     "ManualAssistantResponse",
+}
+COPILOT_EVENT_NAMES = {
+    "sessionStart": "SessionStart",
+    "sessionEnd": "SessionEnd",
+    "userPromptSubmitted": "UserPromptSubmit",
+    "preToolUse": "PreToolUse",
+    "postToolUse": "PostToolUse",
+    "postToolUseFailure": "PostToolUseFailure",
+    "agentStop": "Stop",
+    "subagentStart": "SubagentStart",
+    "subagentStop": "SubagentStop",
+    "errorOccurred": "ErrorOccurred",
 }
 
 
@@ -69,8 +85,13 @@ def _timestamp(event: dict[str, Any]) -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _canonical_event_name(name: Any) -> Any:
+    return COPILOT_EVENT_NAMES.get(name, name) if isinstance(name, str) else name
+
+
 def record_for(event: dict[str, Any]) -> dict[str, Any]:
-    name = event.get("hook_event_name") or event.get("eventName") or event.get("event_type") or "unknown"
+    raw_name = event.get("hook_event_name") or event.get("eventName") or event.get("event_type") or "unknown"
+    name = _canonical_event_name(raw_name)
     record: dict[str, Any] = {
         "timestamp": _timestamp(event),
         "event_type": name,
@@ -103,6 +124,10 @@ def record_for(event: dict[str, Any]) -> dict[str, Any]:
                 "Export the Copilot chat and append a redacted manual record when full responses are required."
             ),
         )
+    elif name in {"SessionStart", "SessionEnd"}:
+        record["reason"] = event.get("reason")
+    elif name == "ErrorOccurred":
+        record["error"] = redact(event.get("error", event.get("message", "")))
     elif name == "SubagentStart":
         record.update(
             agent_role="subagent",
@@ -166,7 +191,7 @@ def main() -> None:
     if not isinstance(event, dict):
         raise ValueError("Copilot hook input must be a JSON object")
     name = event.get("hook_event_name") or event.get("eventName") or event.get("event_type")
-    if name not in KNOWN_EVENTS:
+    if not isinstance(name, str) or _canonical_event_name(name) not in KNOWN_EVENTS:
         raise ValueError(f"Unsupported Copilot hook event: {name!r}")
     cwd = event.get("cwd") or Path.cwd()
     repo_root = find_repo_root(Path(cwd).resolve())

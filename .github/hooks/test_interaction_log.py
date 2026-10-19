@@ -1,9 +1,30 @@
+import json
+from pathlib import Path
 import unittest
 
 from interaction_log import record_for, redact
 
 
 class InteractionLogTests(unittest.TestCase):
+    def test_hook_configuration_uses_copilot_event_names(self):
+        config_path = Path(__file__).with_name("interaction-log.json")
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(1, config["version"])
+        self.assertEqual(
+            {
+                "userPromptSubmitted",
+                "postToolUse",
+                "postToolUseFailure",
+                "agentStop",
+                "subagentStart",
+                "subagentStop",
+            },
+            set(config["hooks"]),
+        )
+        for hooks in config["hooks"].values():
+            self.assertTrue(all(hook["type"] == "command" for hook in hooks))
+
     def test_redacts_sensitive_fields_and_inline_values(self):
         value = {
             "password": "ChangeMe123!",
@@ -23,7 +44,7 @@ class InteractionLogTests(unittest.TestCase):
     def test_records_stable_copilot_tool_event_payload(self):
         record = record_for(
             {
-                "hook_event_name": "PostToolUse",
+                "hook_event_name": "postToolUse",
                 "session_id": "session-1",
                 "timestamp": "2026-10-19T00:00:00Z",
                 "tool_name": "read_file",
@@ -35,6 +56,32 @@ class InteractionLogTests(unittest.TestCase):
         self.assertEqual("GitHub Copilot", record["provider"])
         self.assertEqual("read_file", record["tool_name"])
         self.assertEqual("read complete", record["tool_result"]["text_result_for_llm"])
+
+    def test_records_copilot_prompt_event_name(self):
+        record = record_for(
+            {
+                "hook_event_name": "userPromptSubmitted",
+                "sessionId": "session-2",
+                "prompt": "Check approval limits.",
+            }
+        )
+
+        self.assertEqual("UserPromptSubmit", record["event_type"])
+        self.assertEqual("user", record["agent_role"])
+        self.assertEqual("Check approval limits.", record["prompt"])
+
+    def test_records_copilot_agent_stop_event_name(self):
+        record = record_for(
+            {
+                "hook_event_name": "agentStop",
+                "transcriptPath": "/tmp/session.jsonl",
+                "stopReason": "completed",
+            }
+        )
+
+        self.assertEqual("Stop", record["event_type"])
+        self.assertTrue(record["transcript_available"])
+        self.assertNotIn("response", record)
 
     def test_records_documented_manual_assistant_response_event_type(self):
         record = record_for(
