@@ -1,5 +1,8 @@
 import json
 from pathlib import Path
+import subprocess
+import sys
+import tempfile
 import unittest
 
 from interaction_log import record_for, redact
@@ -70,6 +73,52 @@ class InteractionLogTests(unittest.TestCase):
         self.assertEqual("user", record["agent_role"])
         self.assertEqual('Check approval limits; token="[REDACTED]".', record["prompt"])
         self.assertNotIn("abc123", record["prompt"])
+
+    def test_hook_command_appends_copilot_prompt_to_repository_log(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / ".git").mkdir()
+            event = {
+                "hook_event_name": "userPromptSubmitted",
+                "prompt": "Summarize the approval limits.",
+                "cwd": str(root),
+            }
+            script = Path(__file__).with_name("interaction_log.py")
+
+            result = subprocess.run(
+                [sys.executable, str(script)],
+                input=json.dumps(event),
+                text=True,
+                capture_output=True,
+                cwd=root,
+                check=False,
+            )
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            records = [
+                json.loads(line)
+                for line in (root / "AI_INTERACTION_LOG.jsonl").read_text().splitlines()
+            ]
+            self.assertEqual(1, len(records))
+            self.assertEqual("UserPromptSubmit", records[0]["event_type"])
+            self.assertEqual("Summarize the approval limits.", records[0]["prompt"])
+
+    def test_records_manual_prompt_with_capture_method(self):
+        record = record_for(
+            {
+                "event_type": "UserPromptSubmit",
+                "prompt": "Please continue; password=example123",
+                "capture_method": "manual from visible conversation; not a live hook",
+            }
+        )
+
+        self.assertEqual("UserPromptSubmit", record["event_type"])
+        self.assertEqual("user", record["agent_role"])
+        self.assertEqual('Please continue; password="[REDACTED]"', record["prompt"])
+        self.assertEqual(
+            "manual from visible conversation; not a live hook",
+            record["capture_method"],
+        )
 
     def test_records_copilot_agent_stop_event_name(self):
         record = record_for(

@@ -102,7 +102,11 @@ def record_for(event: dict[str, Any]) -> dict[str, Any]:
     }
 
     if name == "UserPromptSubmit":
-        record.update(agent_role="user", prompt=redact(event.get("prompt", "")))
+        record.update(
+            agent_role="user",
+            prompt=redact(event.get("prompt", "")),
+            capture_method=event.get("capture_method", record["capture_method"]),
+        )
     elif name == "PostToolUse":
         record.update(
             tool_name=_event_field(event, "tool_name", "toolName"),
