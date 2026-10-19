@@ -60,14 +60,6 @@ AGENTS.md                 conventions for AI coding agents
 
 Open this repository as the VS Code workspace and select the Copilot agent harness. Project instructions and reusable Copilot agents, prompts, skills, and hooks live under `.github/`. See [docs/AI_INTERACTION_LOG.md](docs/AI_INTERACTION_LOG.md) for logging behavior and the limits of automatic response capture.
 
-## Assignment submission
-
-- [Assignment write-up and verification evidence](ASSIGNMENT.md)
-- [OpenSpec approval proposal and acceptance criteria](openspec/changes/invoice-approval-limits/)
-- [Pull request to the intended assignment fork](https://github.com/Nagarro-Utkarsh/ai-sdlc-demo-app/pull/1)
-
-The PR targets `main` in `Nagarro-Utkarsh/ai-sdlc-demo-app`; its current GitHub author is the authenticated `Utkarsh-Mahajan` account. GitHub does not allow changing an existing PR's author.
-
 ## Use cases
 
 - [UC-1 Bulk invoice approval](docs/use-cases/UC-1-bulk-approval.md)
