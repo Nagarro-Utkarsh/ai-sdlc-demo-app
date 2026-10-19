@@ -15,8 +15,8 @@
 
 ## 3. Integration Evidence
 
-- [ ] 3.1 Run `dotnet test backend/InvoiceApp.sln` and the documented Playwright command; verify both results are recorded with the exact commands and outcomes.
-- [ ] 3.2 Run the pinned Stryker 4.13.0 mutation command after recording a baseline; verify the before/after scores and surviving mutants are documented.
+- [x] 3.1 Run `dotnet test backend/InvoiceApp.sln` and the documented Playwright command; verify both results are recorded with the exact commands and outcomes.
+- [x] 3.2 Run the pinned Stryker 4.13.0 mutation command after recording a baseline; verify the before/after scores and surviving mutants are documented.
 
 ## Workflow follow-up
 

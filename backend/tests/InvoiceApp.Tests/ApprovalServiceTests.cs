@@ -110,13 +110,15 @@ public class ApprovalServiceTests
         Assert.Equal(1, repository.UpdateCount);
     }
 
-    [Fact]
-    public void Approve_HighValueInvoice_DirectorSecondApprovesInvoice()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public void Approve_HighValueInvoice_DirectorSecondApprovesInvoice(string? secondApprovalBy)
     {
         var invoice = InvoiceWith("INV-1", InvoiceStatus.PendingApproval, 600_000m);
         invoice.FirstApprovalBy = "demo.manager";
         invoice.FirstApprovalAt = DateTime.UtcNow.AddMinutes(-1);
-        invoice.SecondApprovalBy = string.Empty;
+        invoice.SecondApprovalBy = secondApprovalBy;
         var repository = new FakeInvoiceRepository(invoice);
         var service = new ApprovalService(repository);
 
