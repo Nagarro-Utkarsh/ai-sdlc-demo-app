@@ -62,13 +62,14 @@ class InteractionLogTests(unittest.TestCase):
             {
                 "hook_event_name": "userPromptSubmitted",
                 "sessionId": "session-2",
-                "prompt": "Check approval limits.",
+                "prompt": 'Check approval limits; token="abc123".',
             }
         )
 
         self.assertEqual("UserPromptSubmit", record["event_type"])
         self.assertEqual("user", record["agent_role"])
-        self.assertEqual("Check approval limits.", record["prompt"])
+        self.assertEqual('Check approval limits; token="[REDACTED]".', record["prompt"])
+        self.assertNotIn("abc123", record["prompt"])
 
     def test_records_copilot_agent_stop_event_name(self):
         record = record_for(

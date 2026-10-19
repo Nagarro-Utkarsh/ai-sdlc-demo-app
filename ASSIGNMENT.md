@@ -106,7 +106,7 @@ cd ai-sdlc-demo-app
 python3 -m unittest discover -s .github/hooks -p 'test_*.py'
 ```
 Result: 7 tests ran, all passed.
-The log includes manually structured summaries and a clearly labeled retrospective summary; it is not a verbatim or complete transcript. The logger was tested with its unit suite and Copilot-format hook payloads, but live VS Code hook activation was not verified. A session-context summary was available for this active Copilot session; a full VS Code transcript export was not available in this environment.
+The `userPromptSubmitted` hook writes the submitted text into each prompt record's `prompt` field after redaction. The existing log contains two early structured user-prompt records and manually structured assistant summaries; it is not a verbatim or complete transcript, and missing prompts have not been reconstructed. The logger was tested with Copilot-format hook payloads, but live VS Code hook activation was not verified. A session-context summary was available for this active Copilot session; a full VS Code transcript export was not available in this environment.
 
 ## Demo video
 Video link: pending upload in this environment. No valid public upload or verified link was produced here, so this section intentionally avoids inventing a file or URL.

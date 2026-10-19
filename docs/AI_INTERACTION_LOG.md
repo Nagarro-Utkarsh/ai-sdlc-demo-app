@@ -2,7 +2,15 @@
 
 The assignment log is `AI_INTERACTION_LOG.jsonl` at the repository root. Open this repository as the VS Code workspace, trust it, and select the GitHub Copilot harness. The versioned Copilot hook configuration uses the lower-camel event names required by Copilot-compatible hooks.
 
-The hooks append JSONL records for submitted prompts, successful and failed tool calls, agent stop events, and custom subagent starts/results. Copilot's lower-camel event names are normalized to the logger's stable event names. The logger redacts values under sensitive field names, common inline secret assignments, bearer values, secret-bearing CLI flags, and URL credentials. The log is local repository content and must be reviewed for secrets before committing or sharing it.
+The `userPromptSubmitted` hook records the submitted prompt text in the JSONL record's `prompt` field with `agent_role: "user"`. Tool events, agent stop events, and custom subagent starts/results are recorded as well. Copilot's lower-camel event names are normalized to the logger's stable event names.
+
+For example, a prompt record has this shape:
+
+```json
+{"event_type":"UserPromptSubmit","agent_role":"user","prompt":"<redacted prompt text>"}
+```
+
+The logger redacts values under sensitive field names, common inline secret assignments, bearer values, secret-bearing CLI flags, and URL credentials. Redaction is a safeguard, not a guarantee; review the log for private data before committing or sharing it. Historical summaries are not a complete prompt transcript, and missing prompt text must not be reconstructed.
 
 ## Response-capture limit
 
