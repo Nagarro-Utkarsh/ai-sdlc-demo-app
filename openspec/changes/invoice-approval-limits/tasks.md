@@ -2,9 +2,9 @@
 
 ## 1. Single-Approver Limits
 
-- [ ] 1.1 Add Manager and Director role-aware approval input and enforce the 50,000 and 500,000 single-approval limits; verify `dotnet test backend/InvoiceApp.sln` covers 50,000, 50,000.01, 500,000, and 500,000.01.
-- [ ] 1.2 Update demo approval users and API authorization for Manager and Director while keeping Admin's invoice-administration and rejection access; verify authorization behavior with focused API tests or an observed HTTP check.
-- [ ] 1.3 Return clear limit errors before changing invoice fields; verify negative unit tests compare the full invoice state before and after a rejected single approval.
+- [x] 1.1 Add Manager and Director role-aware approval input and enforce the 50,000 and 500,000 single-approval limits; verify `dotnet test backend/InvoiceApp.sln` covers 50,000, 50,000.01, 500,000, and 500,000.01.
+- [x] 1.2 Update demo approval users and API authorization for Manager and Director while keeping Admin's invoice-administration and rejection access; verify authorization behavior with an observed HTTP check.
+- [x] 1.3 Return clear limit errors before changing invoice fields; verify negative unit tests compare the full invoice state before and after a rejected single approval.
 
 ## 2. High-Value Two-Approver Flow
 

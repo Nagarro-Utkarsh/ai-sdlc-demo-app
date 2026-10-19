@@ -2,7 +2,7 @@ namespace InvoiceApp.Domain;
 
 /// <summary>
 /// Moves an invoice through its lifecycle: Draft -> PendingApproval -> Approved or Rejected.
-/// One invoice at a time, decided as a whole by a single approver.
+/// One invoice at a time, with role-based approval limits.
 /// </summary>
 public class ApprovalService
 {
@@ -28,10 +28,23 @@ public class ApprovalService
         return invoice;
     }
 
-    public Invoice Approve(string invoiceId, string approver)
+    public Invoice Approve(string invoiceId, string approver, ApprovalRole role)
     {
         var invoice = Find(invoiceId);
         EnsurePending(invoice);
+
+        var approvalLimit = role switch
+        {
+            ApprovalRole.Manager => 50_000m,
+            ApprovalRole.Director => 500_000m,
+            _ => throw new ArgumentOutOfRangeException(nameof(role), role, "Only Managers and Directors can approve invoices.")
+        };
+
+        if (invoice.Amount > approvalLimit)
+        {
+            throw new InvalidOperationException(
+                $"{role} cannot approve an invoice above {approvalLimit:N0} with a single approval.");
+        }
 
         invoice.Status = InvoiceStatus.Approved;
         invoice.DecidedBy = approver;
