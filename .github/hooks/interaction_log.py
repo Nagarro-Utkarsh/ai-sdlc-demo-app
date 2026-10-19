@@ -89,8 +89,14 @@ def _canonical_event_name(name: Any) -> Any:
     return COPILOT_EVENT_NAMES.get(name, name) if isinstance(name, str) else name
 
 
-def record_for(event: dict[str, Any]) -> dict[str, Any]:
-    raw_name = event.get("hook_event_name") or event.get("eventName") or event.get("event_type") or "unknown"
+def record_for(event: dict[str, Any], default_event_name: str | None = None) -> dict[str, Any]:
+    raw_name = (
+        event.get("hook_event_name")
+        or event.get("eventName")
+        or event.get("event_type")
+        or default_event_name
+        or "unknown"
+    )
     name = _canonical_event_name(raw_name)
     record: dict[str, Any] = {
         "timestamp": _timestamp(event),
@@ -194,12 +200,18 @@ def main() -> None:
     event = json.load(sys.stdin)
     if not isinstance(event, dict):
         raise ValueError("Copilot hook input must be a JSON object")
-    name = event.get("hook_event_name") or event.get("eventName") or event.get("event_type")
+    configured_event_name = sys.argv[1] if len(sys.argv) > 1 else None
+    name = (
+        event.get("hook_event_name")
+        or event.get("eventName")
+        or event.get("event_type")
+        or configured_event_name
+    )
     if not isinstance(name, str) or _canonical_event_name(name) not in KNOWN_EVENTS:
         raise ValueError(f"Unsupported Copilot hook event: {name!r}")
     cwd = event.get("cwd") or Path.cwd()
     repo_root = find_repo_root(Path(cwd).resolve())
-    append_record(repo_root / "AI_INTERACTION_LOG.jsonl", record_for(event))
+    append_record(repo_root / "AI_INTERACTION_LOG.jsonl", record_for(event, configured_event_name))
 
 
 if __name__ == "__main__":

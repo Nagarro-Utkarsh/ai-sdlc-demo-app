@@ -16,6 +16,7 @@ class InteractionLogTests(unittest.TestCase):
         self.assertEqual(1, config["version"])
         self.assertEqual(
             {
+                "sessionStart",
                 "userPromptSubmitted",
                 "postToolUse",
                 "postToolUseFailure",
@@ -25,8 +26,17 @@ class InteractionLogTests(unittest.TestCase):
             },
             set(config["hooks"]),
         )
-        for hooks in config["hooks"].values():
+        for event_name, hooks in config["hooks"].items():
             self.assertTrue(all(hook["type"] == "command" for hook in hooks))
+            self.assertTrue(
+                all(hook["bash"].endswith(f"interaction_log.py {event_name}") for hook in hooks)
+            )
+            self.assertTrue(
+                all(
+                    hook["powershell"].endswith(f"interaction_log.py {event_name}")
+                    for hook in hooks
+                )
+            )
 
     def test_redacts_sensitive_fields_and_inline_values(self):
         value = {
@@ -74,6 +84,19 @@ class InteractionLogTests(unittest.TestCase):
         self.assertEqual('Check approval limits; token="[REDACTED]".', record["prompt"])
         self.assertNotIn("abc123", record["prompt"])
 
+    def test_records_copilot_session_start_event_name(self):
+        record = record_for(
+            {
+                "hook_event_name": "sessionStart",
+                "sessionId": "session-3",
+                "reason": "new",
+            }
+        )
+
+        self.assertEqual("SessionStart", record["event_type"])
+        self.assertEqual("session-3", record["session_id"])
+        self.assertEqual("new", record["reason"])
+
     def test_hook_command_appends_copilot_prompt_to_repository_log(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -102,6 +125,64 @@ class InteractionLogTests(unittest.TestCase):
             self.assertEqual(1, len(records))
             self.assertEqual("UserPromptSubmit", records[0]["event_type"])
             self.assertEqual("Summarize the approval limits.", records[0]["prompt"])
+
+    def test_hook_command_uses_configured_event_when_payload_omits_event_name(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / ".git").mkdir()
+            event = {
+                "prompt": "Record this prompt.",
+                "cwd": str(root),
+            }
+            script = Path(__file__).with_name("interaction_log.py")
+
+            result = subprocess.run(
+                [sys.executable, str(script), "userPromptSubmitted"],
+                input=json.dumps(event),
+                text=True,
+                capture_output=True,
+                cwd=root,
+                check=False,
+            )
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            records = [
+                json.loads(line)
+                for line in (root / "AI_INTERACTION_LOG.jsonl").read_text().splitlines()
+            ]
+            self.assertEqual(1, len(records))
+            self.assertEqual("UserPromptSubmit", records[0]["event_type"])
+            self.assertEqual("Record this prompt.", records[0]["prompt"])
+
+    def test_hook_command_appends_session_start_to_repository_log(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / ".git").mkdir()
+            event = {
+                "hook_event_name": "sessionStart",
+                "sessionId": "session-4",
+                "reason": "new",
+                "cwd": str(root),
+            }
+            script = Path(__file__).with_name("interaction_log.py")
+
+            result = subprocess.run(
+                [sys.executable, str(script)],
+                input=json.dumps(event),
+                text=True,
+                capture_output=True,
+                cwd=root,
+                check=False,
+            )
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            records = [
+                json.loads(line)
+                for line in (root / "AI_INTERACTION_LOG.jsonl").read_text().splitlines()
+            ]
+            self.assertEqual(1, len(records))
+            self.assertEqual("SessionStart", records[0]["event_type"])
+            self.assertEqual("session-4", records[0]["session_id"])
 
     def test_records_manual_prompt_with_capture_method(self):
         record = record_for(
