@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Append redacted Copilot hook events to a repository-root JSONL audit log."""
+"""Maintain redacted Copilot prompt and response records in the repository-root JSONL log."""
 
 from __future__ import annotations
 
@@ -7,9 +7,10 @@ import json
 import os
 import re
 import sys
-from datetime import datetime, timezone
+import tempfile
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 if os.name == "nt":
     import msvcrt
@@ -30,31 +31,18 @@ SECRET_ARGUMENT = re.compile(
 )
 BEARER = re.compile(r"(?i)(\bBearer\s+)[A-Za-z0-9._~+/-]+=*")
 URL_CREDENTIALS = re.compile(r"(?i)(https?://)[^/\s:@]+:[^/\s@]+@")
-KNOWN_EVENTS = {
-    "SessionStart",
-    "SessionEnd",
-    "UserPromptSubmit",
-    "PreToolUse",
-    "PostToolUse",
-    "PostToolUseFailure",
-    "Stop",
-    "SubagentStart",
-    "SubagentStop",
-    "ErrorOccurred",
-    "ManualAssistantResponse",
-}
-COPILOT_EVENT_NAMES = {
-    "sessionStart": "SessionStart",
-    "sessionEnd": "SessionEnd",
-    "userPromptSubmitted": "UserPromptSubmit",
-    "preToolUse": "PreToolUse",
-    "postToolUse": "PostToolUse",
-    "postToolUseFailure": "PostToolUseFailure",
-    "agentStop": "Stop",
-    "subagentStart": "SubagentStart",
-    "subagentStop": "SubagentStop",
-    "errorOccurred": "ErrorOccurred",
-}
+PROMPT_EVENT_NAMES = {"UserPromptSubmit", "userPromptSubmitted"}
+ASSISTANT_EVENT_NAMES = {"Stop", "agentStop"}
+RESPONSE_KEYS = (
+    "response",
+    "assistantResponse",
+    "assistant_response",
+    "last_assistant_message",
+    "answer",
+    "output",
+    "content",
+)
+TRANSCRIPT_LIMIT_BYTES = 50 * 1024 * 1024
 
 
 def redact(value: Any, key: str = "") -> Any:
@@ -72,105 +60,139 @@ def redact(value: Any, key: str = "") -> Any:
     return value
 
 
-def _event_field(event: dict[str, Any], vscode_name: str, copilot_name: str | None = None) -> Any:
-    return event.get(vscode_name, event.get(copilot_name)) if copilot_name else event.get(vscode_name)
-
-
-def _timestamp(event: dict[str, Any]) -> str:
-    value = event.get("timestamp")
-    if isinstance(value, (int, float)):
-        return datetime.fromtimestamp(value / 1000, tz=timezone.utc).isoformat()
-    if isinstance(value, str) and value:
-        return value
-    return datetime.now(timezone.utc).isoformat()
-
-
-def _canonical_event_name(name: Any) -> Any:
-    return COPILOT_EVENT_NAMES.get(name, name) if isinstance(name, str) else name
-
-
 def record_for(event: dict[str, Any], default_event_name: str | None = None) -> dict[str, Any]:
-    raw_name = (
+    event_name = (
         event.get("hook_event_name")
         or event.get("eventName")
         or event.get("event_type")
         or default_event_name
-        or "unknown"
     )
-    name = _canonical_event_name(raw_name)
-    record: dict[str, Any] = {
-        "timestamp": _timestamp(event),
-        "event_type": name,
-        "provider": "GitHub Copilot",
-        "session_id": _event_field(event, "session_id", "sessionId"),
-        "agent_role": "assistant",
-        "capture_method": f"VS Code Copilot {name} hook",
+    if event_name not in PROMPT_EVENT_NAMES:
+        raise ValueError(f"Unsupported Copilot hook event: {event_name!r}")
+
+    prompt = event.get("prompt")
+    if not isinstance(prompt, str):
+        raise ValueError("Copilot user prompt event must include a string prompt")
+
+    response_value = ""
+    for key in RESPONSE_KEYS:
+        if key in event and event[key] is not None:
+            response_value = event[key]
+            break
+    if not isinstance(response_value, str):
+        response_value = json.dumps(response_value, ensure_ascii=False) if response_value is not None else ""
+
+    return {"prompt": redact(prompt), "response": redact(response_value)}
+
+
+def _text_from_content(value: Any) -> str:
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        return "".join(_text_from_content(item) for item in value)
+    if isinstance(value, dict):
+        if isinstance(value.get("text"), str):
+            return value["text"]
+        for key in ("content", "message", "parts", "value", "data"):
+            if key in value:
+                return _text_from_content(value[key])
+    return ""
+
+
+def _transcript_messages(value: Any) -> Iterator[tuple[str, str]]:
+    if isinstance(value, list):
+        for item in value:
+            yield from _transcript_messages(item)
+        return
+    if not isinstance(value, dict):
+        return
+
+    message_type = str(
+        value.get("role")
+        or value.get("type")
+        or value.get("event_type")
+        or value.get("eventType")
+        or ""
+    ).lower()
+    message_keys = {
+        "user": (
+            "user_content",
+            "userContent",
+            "prompt",
+            "user_prompt",
+            "userPrompt",
+            "content",
+            "message",
+            "data",
+        ),
+        "assistant": (
+            "assistant_content",
+            "assistantContent",
+            "last_assistant_message",
+            "response",
+            "assistant_response",
+            "assistantResponse",
+            "content",
+            "message",
+            "data",
+        ),
     }
 
-    if name == "UserPromptSubmit":
-        record.update(
-            agent_role="user",
-            prompt=redact(event.get("prompt", "")),
-            capture_method=event.get("capture_method", record["capture_method"]),
-        )
-    elif name == "PostToolUse":
-        record.update(
-            tool_name=_event_field(event, "tool_name", "toolName"),
-            tool_input=redact(_event_field(event, "tool_input", "toolArgs")),
-            tool_result=redact(_event_field(event, "tool_result", "toolResult")),
-        )
-    elif name == "PostToolUseFailure":
-        record.update(
-            tool_name=_event_field(event, "tool_name", "toolName"),
-            tool_input=redact(_event_field(event, "tool_input", "toolArgs")),
-            error=redact(event.get("error", "")),
-        )
-    elif name == "Stop":
-        record.update(
-            stop_reason=_event_field(event, "stop_reason", "stopReason"),
-            transcript_available=bool(_event_field(event, "transcript_path", "transcriptPath")),
-            response_capture=(
-                "The stable Stop hook provides a transcript path, not assistant response text. "
-                "Export the Copilot chat and append a redacted manual record when full responses are required."
-            ),
-        )
-    elif name in {"SessionStart", "SessionEnd"}:
-        record["reason"] = event.get("reason")
-    elif name == "ErrorOccurred":
-        record["error"] = redact(event.get("error", event.get("message", "")))
-    elif name == "SubagentStart":
-        record.update(
-            agent_role="subagent",
-            agent_type=_event_field(event, "agent_type", "agentType"),
-            agent_name=_event_field(event, "agent_name", "agentName"),
-        )
-    elif name == "SubagentStop":
-        record.update(
-            agent_role=_event_field(event, "agent_type", "agentType") or "subagent",
-            agent_name=_event_field(event, "agent_name", "agentName"),
-            response=redact(_event_field(event, "last_assistant_message", "response")),
-        )
-    elif name == "ManualAssistantResponse":
-        record.update(
-            agent_role="assistant",
-            response=redact(event.get("response", "")),
-            capture_method=event.get("capture_method", "manual Copilot chat record"),
-        )
-    else:
-        record["capture_method"] = "Unknown Copilot hook event; payload fields omitted"
+    for role in ("user", "assistant"):
+        if message_type == role or message_type.endswith(f".{role}.message") or message_type == f"{role}.message":
+            for key in message_keys[role]:
+                if key in value:
+                    text = _text_from_content(value[key])
+                    if text:
+                        yield role, text
+                        return
 
-    return redact(record)
+    if "user_content" in value or "userContent" in value:
+        text = _text_from_content(value.get("user_content", value.get("userContent")))
+        if text:
+            yield "user", text
+    if "assistant_content" in value or "assistantContent" in value:
+        text = _text_from_content(value.get("assistant_content", value.get("assistantContent")))
+        if text:
+            yield "assistant", text
+
+    for key, item in value.items():
+        if key not in {"user_content", "userContent", "assistant_content", "assistantContent"}:
+            yield from _transcript_messages(item)
 
 
-def find_repo_root(start: Path) -> Path:
-    for candidate in (start, *start.parents):
-        if (candidate / ".git").exists():
-            return candidate
-    raise RuntimeError(f"Could not locate the Git repository root from {start}")
+def transcript_exchange(transcript_path: str | Path) -> tuple[str, str]:
+    path = Path(transcript_path)
+    if not path.is_file():
+        raise FileNotFoundError(f"Copilot transcript does not exist: {path}")
+    if path.stat().st_size > TRANSCRIPT_LIMIT_BYTES:
+        raise ValueError(f"Copilot transcript exceeds the {TRANSCRIPT_LIMIT_BYTES}-byte limit")
+
+    content = path.read_text(encoding="utf-8")
+    try:
+        transcript = json.loads(content)
+        records = [transcript]
+    except json.JSONDecodeError:
+        records = [json.loads(line) for line in content.splitlines() if line.strip()]
+
+    prompt = ""
+    response = ""
+    for role, text in _transcript_messages(records):
+        if role == "user":
+            prompt = text
+            response = ""
+        elif prompt:
+            response = text
+
+    if not prompt:
+        raise ValueError(f"Could not find the latest user prompt in Copilot transcript: {path}")
+    if not response:
+        raise ValueError(f"Could not find the final assistant response in Copilot transcript: {path}")
+    return prompt, response
 
 
-def append_record(log_path: Path, record: dict[str, Any]) -> None:
-    line = json.dumps(record, ensure_ascii=False, separators=(",", ":"), allow_nan=False) + "\n"
+@contextmanager
+def _locked_log(log_path: Path) -> Iterator[None]:
     lock_path = log_path.with_suffix(log_path.suffix + ".lock")
     log_path.parent.mkdir(parents=True, exist_ok=True)
     with lock_path.open("a+b") as lock_file:
@@ -184,10 +206,7 @@ def append_record(log_path: Path, record: dict[str, Any]) -> None:
         else:
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
         try:
-            with log_path.open("a", encoding="utf-8") as log_file:
-                log_file.write(line)
-                log_file.flush()
-                os.fsync(log_file.fileno())
+            yield
         finally:
             if os.name == "nt":
                 lock_file.seek(0)
@@ -196,22 +215,108 @@ def append_record(log_path: Path, record: dict[str, Any]) -> None:
                 fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 
+def find_repo_root(start: Path) -> Path:
+    for candidate in (start, *start.parents):
+        if (candidate / ".git").exists():
+            return candidate
+    raise RuntimeError(f"Could not locate the Git repository root from {start}")
+
+
+def append_record(log_path: Path, record: dict[str, Any]) -> None:
+    line = json.dumps(record, ensure_ascii=False, separators=(",", ":"), allow_nan=False) + "\n"
+    with _locked_log(log_path):
+        with log_path.open("a", encoding="utf-8") as log_file:
+            log_file.write(line)
+            log_file.flush()
+            os.fsync(log_file.fileno())
+
+
+def update_response(log_path: Path, prompt: str, response: str) -> None:
+    redacted_prompt = redact(prompt)
+    redacted_response = redact(response)
+    with _locked_log(log_path):
+        records = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines()]
+        updated = False
+        for index in range(len(records) - 1, -1, -1):
+            if records[index].get("prompt") == redacted_prompt and not records[index].get("response"):
+                records[index]["response"] = redacted_response
+                updated = True
+                break
+        if not updated:
+            for index in range(len(records) - 1, -1, -1):
+                if not records[index].get("response"):
+                    records[index]["response"] = redacted_response
+                    updated = True
+                    break
+        if not updated:
+            raise ValueError("No pending interaction-log entry matches the completed prompt")
+
+        temporary_path = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                dir=log_path.parent,
+                prefix=f".{log_path.name}.",
+                suffix=".tmp",
+                delete=False,
+            ) as temporary_file:
+                temporary_path = Path(temporary_file.name)
+                for record in records:
+                    temporary_file.write(
+                        json.dumps(record, ensure_ascii=False, separators=(",", ":"), allow_nan=False) + "\n"
+                    )
+                temporary_file.flush()
+                os.fsync(temporary_file.fileno())
+            os.replace(temporary_path, log_path)
+        finally:
+            if temporary_path is not None:
+                temporary_path.unlink(missing_ok=True)
+
+
 def main() -> None:
     event = json.load(sys.stdin)
     if not isinstance(event, dict):
         raise ValueError("Copilot hook input must be a JSON object")
     configured_event_name = sys.argv[1] if len(sys.argv) > 1 else None
-    name = (
+    cwd = event.get("cwd") or Path.cwd()
+    repo_root = find_repo_root(Path(cwd).resolve())
+    event_name = (
         event.get("hook_event_name")
         or event.get("eventName")
         or event.get("event_type")
         or configured_event_name
     )
-    if not isinstance(name, str) or _canonical_event_name(name) not in KNOWN_EVENTS:
-        raise ValueError(f"Unsupported Copilot hook event: {name!r}")
-    cwd = event.get("cwd") or Path.cwd()
-    repo_root = find_repo_root(Path(cwd).resolve())
-    append_record(repo_root / "AI_INTERACTION_LOG.jsonl", record_for(event, configured_event_name))
+    log_path = repo_root / "AI_INTERACTION_LOG.jsonl"
+    if event_name in PROMPT_EVENT_NAMES:
+        append_record(log_path, record_for(event, configured_event_name))
+    elif event_name in ASSISTANT_EVENT_NAMES:
+        response_value = next(
+            (
+                event[key]
+                for key in RESPONSE_KEYS
+                if key != "content" and event.get(key) is not None
+            ),
+            None,
+        )
+        response = _text_from_content(response_value)
+        if not response and response_value is not None:
+            response = json.dumps(response_value, ensure_ascii=False)
+        prompt = ""
+        if not response:
+            transcript_path = (
+                event.get("agent_transcript_path")
+                or event.get("transcript_path")
+                or event.get("transcriptPath")
+            )
+            if not isinstance(transcript_path, str) or not transcript_path:
+                raise ValueError(
+                    "Copilot agent-stop event must include assistant response text or a transcript path"
+                )
+            prompt, response = transcript_exchange(transcript_path)
+        update_response(log_path, prompt, response)
+    else:
+        raise ValueError(f"Unsupported Copilot hook event: {event_name!r}")
 
 
 if __name__ == "__main__":

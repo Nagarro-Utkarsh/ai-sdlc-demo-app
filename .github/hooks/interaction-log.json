@@ -1,15 +1,6 @@
 {
   "version": 1,
   "hooks": {
-    "sessionStart": [
-      {
-        "type": "command",
-        "bash": "python3 .github/hooks/interaction_log.py sessionStart",
-        "powershell": "python .github/hooks/interaction_log.py sessionStart",
-        "cwd": ".",
-        "timeoutSec": 500
-      }
-    ],
     "userPromptSubmitted": [
       {
         "type": "command",
@@ -19,47 +10,11 @@
         "timeoutSec": 5
       }
     ],
-    "postToolUse": [
-      {
-        "type": "command",
-        "bash": "python3 .github/hooks/interaction_log.py postToolUse",
-        "powershell": "python .github/hooks/interaction_log.py postToolUse",
-        "cwd": ".",
-        "timeoutSec": 5
-      }
-    ],
-    "postToolUseFailure": [
-      {
-        "type": "command",
-        "bash": "python3 .github/hooks/interaction_log.py postToolUseFailure",
-        "powershell": "python .github/hooks/interaction_log.py postToolUseFailure",
-        "cwd": ".",
-        "timeoutSec": 5
-      }
-    ],
     "agentStop": [
       {
         "type": "command",
         "bash": "python3 .github/hooks/interaction_log.py agentStop",
         "powershell": "python .github/hooks/interaction_log.py agentStop",
-        "cwd": ".",
-        "timeoutSec": 5
-      }
-    ],
-    "subagentStart": [
-      {
-        "type": "command",
-        "bash": "python3 .github/hooks/interaction_log.py subagentStart",
-        "powershell": "python .github/hooks/interaction_log.py subagentStart",
-        "cwd": ".",
-        "timeoutSec": 5
-      }
-    ],
-    "subagentStop": [
-      {
-        "type": "command",
-        "bash": "python3 .github/hooks/interaction_log.py subagentStop",
-        "powershell": "python .github/hooks/interaction_log.py subagentStop",
         "cwd": ".",
         "timeoutSec": 5
       }

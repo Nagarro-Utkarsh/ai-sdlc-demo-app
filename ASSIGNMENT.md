@@ -105,8 +105,8 @@ The logger validation command ran successfully:
 cd ai-sdlc-demo-app
 python3 -m unittest discover -s .github/hooks -p 'test_*.py'
 ```
-Result: 9 tests ran, all passed.
-The `userPromptSubmitted` hook is configured to write submitted text into each prompt record's `prompt` field after redaction. The user confirmed submitting the suggested harmless VS Code test prompt, but it did not appear as a live hook event. That prompt and the subsequent visible prompt were added manually with explicit `capture_method` labels; they are not evidence of live hook execution. The log also contains manually structured assistant summaries, is not a verbatim or complete transcript, and does not reconstruct missing turns. The logger was tested with Copilot-format hook payloads and its append command was exercised end-to-end, but live VS Code hook activation remains unverified. A session-context summary was available for this active Copilot session; a full VS Code transcript export was not available in this environment.
+Result: 11 tests ran, all passed.
+The `userPromptSubmitted` hook writes submitted text into each prompt record's `prompt` field after redaction. The `agentStop` hook then reads the completed exchange from the provided transcript path and fills the matching `response` field. Unit tests exercise the prompt and stop events together using transcript-shaped input; live VS Code hook activation remains unverified.
 
 ## Demo video
 Video link: pending upload in this environment. No valid public upload or verified link was produced here, so this section intentionally avoids inventing a file or URL.
