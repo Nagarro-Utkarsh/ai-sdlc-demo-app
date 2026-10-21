@@ -72,8 +72,13 @@
       approve.addEventListener('click', () => decide(`/approvals/${invoice.id}/approve`, {}));
       reject.addEventListener('click', () => decide(`/approvals/${invoice.id}/reject`, { reason: reason.value }));
 
+      const approvalProgress = invoice.firstApprovalBy
+        ? el('p', { class: 'approval-hint' }, `First approval recorded by ${invoice.firstApprovalBy}. Awaiting approval from a different Director.`)
+        : null;
+
       return el('li', {},
         el('span', {}, `${invoice.id} · ${invoice.customerName} · ${money.format(invoice.amount)}`),
+        ...(approvalProgress ? [approvalProgress] : []),
         el('span', {}, approve),
         el('div', { class: 'reject-row' }, reason, reject));
     }));
