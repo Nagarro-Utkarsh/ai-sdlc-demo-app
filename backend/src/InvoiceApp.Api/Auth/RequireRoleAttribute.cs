@@ -20,7 +20,13 @@ public class RequireRoleAttribute : ActionFilterAttribute
 
         if (session is null || !_roles.Contains(session.Role))
         {
-            context.Result = new StatusCodeResult(StatusCodes.Status403Forbidden);
+            context.Result = new ObjectResult(new
+            {
+                error = $"This action requires one of these roles: {string.Join(", ", _roles)}."
+            })
+            {
+                StatusCode = StatusCodes.Status403Forbidden
+            };
         }
     }
 }

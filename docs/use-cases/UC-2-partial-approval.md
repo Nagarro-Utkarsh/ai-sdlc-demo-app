@@ -15,7 +15,8 @@ An approver can approve an invoice for an amount lower than the invoiced amount,
 - Both the invoiced amount and the approved amount are kept on the invoice.
 - The invoice shows as partially approved, separate from fully approved.
 - A note is required whenever the approved amount is lower than the invoiced amount.
-- Existing approve and reject behaviour stays exactly as it is.
+- Existing rejection behaviour and the role-based approval policy stay in force, including two distinct approvals for invoices above 500,000.
+- When applying role limits and deciding whether two approvals are needed, use the approved amount.
 
 ## Where it touches the code
 

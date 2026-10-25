@@ -39,8 +39,11 @@
 
   async function refresh() {
     const invoices = await api('/invoices');
-    renderInvoices(invoices);
-    renderPending(invoices.filter((i) => i.status === 'PendingApproval'));
+    const newestFirst = [...invoices].sort((first, second) =>
+      Date.parse(second.updatedAt) - Date.parse(first.updatedAt)
+      || second.id.localeCompare(first.id, undefined, { numeric: true }));
+    renderInvoices(newestFirst);
+    renderPending(newestFirst.filter((invoice) => invoice.status === 'PendingApproval'));
   }
 
   function renderInvoices(invoices) {
@@ -56,7 +59,9 @@
         el('td', {}, invoice.id),
         el('td', {}, invoice.customerName),
         el('td', {}, money.format(invoice.amount)),
+        el('td', {}, invoice.approvedAmount == null ? '—' : money.format(invoice.approvedAmount)),
         el('td', { class: `status status-${invoice.status}` }, invoice.status.replace(/([a-z])([A-Z])/g, '$1 $2')),
+        el('td', {}, invoice.approvalNote || ''),
         actions);
     }));
   }
@@ -68,12 +73,35 @@
       const approve = el('button', { type: 'button', 'aria-label': `Approve invoice ${invoice.id}` }, 'Approve');
       const reject = el('button', { type: 'button', class: 'danger', 'aria-label': `Reject invoice ${invoice.id}` }, 'Reject');
       const reason = el('input', { id: reasonId, 'aria-label': `Rejection reason for ${invoice.id}`, placeholder: 'Reason (required to reject)' });
+      const approvedAmount = el('input', {
+        type: 'number',
+        min: '0.01',
+        max: String(invoice.amount),
+        step: '0.01',
+        value: String(invoice.firstApprovalAmount ?? invoice.amount),
+        'aria-label': `Approved amount for ${invoice.id}`
+      });
+      const approvalNote = el('input', {
+        'aria-label': `Approval note for ${invoice.id}`,
+        placeholder: 'Note (required for partial approval)',
+        value: invoice.firstApprovalNote || ''
+      });
 
-      approve.addEventListener('click', () => decide(`/approvals/${invoice.id}/approve`, {}));
+      approve.addEventListener('click', () => decide(`/approvals/${invoice.id}/approve`, {
+        approvedAmount: Number(approvedAmount.value),
+        note: approvalNote.value
+      }));
       reject.addEventListener('click', () => decide(`/approvals/${invoice.id}/reject`, { reason: reason.value }));
+
+      const approvalProgress = invoice.firstApprovalBy
+        ? el('p', { class: 'approval-hint' }, `First approval of ${money.format(invoice.firstApprovalAmount)} recorded by ${invoice.firstApprovalBy}. Awaiting approval from a different Director.`)
+        : null;
 
       return el('li', {},
         el('span', {}, `${invoice.id} · ${invoice.customerName} · ${money.format(invoice.amount)}`),
+        ...(approvalProgress ? [approvalProgress] : []),
+        el('label', {}, `Approved amount for ${invoice.id}`, approvedAmount),
+        el('label', {}, `Approval note for ${invoice.id}`, approvalNote),
         el('span', {}, approve),
         el('div', { class: 'reject-row' }, reason, reject));
     }));

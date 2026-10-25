@@ -1,12 +1,12 @@
 using InvoiceApp.Api.Auth;
 using InvoiceApp.Domain;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace InvoiceApp.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[RequireRole("Approver", "Admin")]
 public class ApprovalsController : ApiControllerBase
 {
     private readonly ApprovalService _approvals;
@@ -17,12 +17,26 @@ public class ApprovalsController : ApiControllerBase
     }
 
     public record RejectRequest(string Reason);
+    public record ApproveRequest(decimal? ApprovedAmount, string? Note);
 
     [HttpPost("{invoiceId}/approve")]
-    public ActionResult<Invoice> Approve(string invoiceId) =>
-        Handle(() => _approvals.Approve(invoiceId, HttpContext.GetSession().Username));
+    [RequireRole("Manager", "Director")]
+    public ActionResult<Invoice> Approve(
+        string invoiceId,
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] ApproveRequest? request)
+    {
+        var session = HttpContext.GetSession();
+        var role = Enum.Parse<ApprovalRole>(session.Role);
+        return Handle(() => _approvals.Approve(
+            invoiceId,
+            session.Username,
+            role,
+            request?.ApprovedAmount,
+            request?.Note));
+    }
 
     [HttpPost("{invoiceId}/reject")]
+    [RequireRole("Manager", "Director", "Admin")]
     public ActionResult<Invoice> Reject(string invoiceId, [FromBody] RejectRequest request) =>
         Handle(() => _approvals.Reject(invoiceId, HttpContext.GetSession().Username, request.Reason));
 }

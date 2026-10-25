@@ -6,13 +6,16 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
-    baseURL: 'http://localhost:5000',
+    baseURL: 'http://localhost:5055',
+    launchOptions: {
+      slowMo: Number(process.env.PLAYWRIGHT_SLOW_MO ?? 0),
+    },
     trace: 'on-first-retry',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: 'dotnet run --project ../backend/src/InvoiceApp.Api',
-    url: 'http://localhost:5000',
+    command: 'dotnet run --project ../backend/src/InvoiceApp.Api --urls http://localhost:5055',
+    url: 'http://localhost:5055',
     reuseExistingServer: true,
     timeout: 120_000,
   },
