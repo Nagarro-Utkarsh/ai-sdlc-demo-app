@@ -12,7 +12,8 @@ Open http://localhost:5000 and sign in:
 
 | User | Password | Role |
 | --- | --- | --- |
-| `demo.approver` | `ChangeMe123!` | Approver |
+| `demo.manager` | `ChangeMe123!` | Manager |
+| `demo.director` | `ChangeMe123!` | Director |
 | `demo.admin` | `ChangeMe123!` | Admin |
 
 These are demo accounts for a local, in-memory app. They are not real credentials.
@@ -21,14 +22,26 @@ These are demo accounts for a local, in-memory app. They are not real credential
 
 1. Create an invoice (it starts as a draft).
 2. Submit it for approval.
-3. An approver approves it, or rejects it with a reason.
+3. A Manager or Director approves it within their limit, or rejects it with a reason.
 
+Managers may singly approve invoices up to 50,000; Directors may singly approve up to 500,000. Invoices above 500,000 require a Manager's approval followed by a different Director's approval.
 Invoices move through Draft, Pending Approval, then Approved or Rejected.
+
+For an invoice above 500,000, the first Manager approval leaves it pending and records the first approver. A different Director must provide the second approval to complete it. Rejected approval attempts return a reason without changing invoice state.
 
 ## Tests
 
 ```
 dotnet test backend/InvoiceApp.sln
+```
+
+Run the browser end-to-end test with:
+
+```
+cd e2e
+npm ci
+npx playwright install chromium
+npm test
 ```
 
 ## Project layout
@@ -40,6 +53,7 @@ backend/
   tests/InvoiceApp.Tests  xUnit tests
 docs/use-cases            short feature briefs
 AGENTS.md                 conventions for AI coding agents
+.github/                  GitHub Copilot instructions, agents, prompts, skills and hooks
 ```
 
 ## Use cases
