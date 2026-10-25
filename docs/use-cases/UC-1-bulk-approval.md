@@ -14,7 +14,7 @@ Approvers should be able to select several pending invoices and approve them tog
 - See a summary before confirming: number of invoices, total amount, customers involved.
 - Exclude individual invoices from the batch before confirming.
 - Keep an audit trail: who approved what, and when, for every invoice in the batch.
-- Invoices over $1,000 need a second approver before they are final.
+- Apply the active role-based approval policy to each invoice; bulk approval must not bypass role limits or the distinct Manager-then-Director approvals required above 500,000.
 
 ## Out of scope for the first release
 
@@ -23,5 +23,4 @@ Approvers should be able to select several pending invoices and approve them tog
 ## Open questions (good prompts for clarifying questions)
 
 - What happens to the rest of the batch if one invoice fails?
-- Can the same person be both approvers on a large invoice?
 - Is there a limit on batch size?

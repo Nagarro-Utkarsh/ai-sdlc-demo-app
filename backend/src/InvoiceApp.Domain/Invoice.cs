@@ -7,6 +7,10 @@ public class Invoice
     public decimal Amount { get; set; }
     public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? FirstApprovalBy { get; set; }
+    public DateTime? FirstApprovalAt { get; set; }
+    public string? SecondApprovalBy { get; set; }
+    public DateTime? SecondApprovalAt { get; set; }
     public string? DecidedBy { get; set; }
     public DateTime? DecidedAt { get; set; }
     public string? DecisionNote { get; set; }
