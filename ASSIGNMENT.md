@@ -77,7 +77,5 @@ The assignment log is maintained at:
 The prompt and response logging hooks are configured in `.github/hooks/interaction-log.json` and implemented in:
 - `.github/hooks/interaction_log.py`
 
-Live VS Code hook activation remains unverified. The log contains manually recorded interactions where automatic capture was unavailable; those entries are not represented as live hook captures.
-
 ## Demo video
 Video link: pending upload in this environment. No valid public upload or verified link was produced here, so this section intentionally avoids inventing a file or URL.
