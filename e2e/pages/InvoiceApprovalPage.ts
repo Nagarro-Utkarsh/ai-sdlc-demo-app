@@ -12,7 +12,7 @@ export class InvoiceApprovalPage {
 
   async createAndSubmitInvoice(customerName: string, amount: number): Promise<void> {
     await this.page.getByLabel('Customer name').fill(customerName);
-    await this.page.getByLabel('Amount').fill(String(amount));
+    await this.page.getByRole('spinbutton', { name: 'Amount' }).fill(String(amount));
     await this.page.getByRole('button', { name: 'Create invoice' }).click();
 
     const invoiceRow = this.page.getByRole('row').filter({ hasText: customerName });
@@ -28,6 +28,13 @@ export class InvoiceApprovalPage {
 
   async approveInvoice(customerName: string): Promise<void> {
     const invoiceApproval = this.page.getByRole('listitem').filter({ hasText: customerName });
+    await invoiceApproval.getByRole('button', { name: /Approve invoice/ }).click();
+  }
+
+  async approveInvoicePartially(customerName: string, approvedAmount: number, note: string): Promise<void> {
+    const invoiceApproval = this.page.getByRole('listitem').filter({ hasText: customerName });
+    await invoiceApproval.getByLabel(/Approved amount for/).fill(String(approvedAmount));
+    await invoiceApproval.getByLabel(/Approval note for/).fill(note);
     await invoiceApproval.getByRole('button', { name: /Approve invoice/ }).click();
   }
 

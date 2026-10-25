@@ -1,7 +1,7 @@
 # Invoice approval assignment write-up
 
 ## Scope and result
-This repository implements the role-based invoice approval feature described in the assignment. The approval service enforces the single-approver limits and the two-step approval flow for high-value invoices, while rejecting invalid approval attempts without mutating invoice state.
+This repository implements role-based full and partial invoice approvals. The approval service enforces the single-approver limits and the two-step flow for high approved amounts, while rejecting invalid approval attempts without mutating invoice state.
 
 The main files involved are:
 - `backend/src/InvoiceApp.Domain/ApprovalService.cs` — approval rules and lifecycle transitions
@@ -11,22 +11,21 @@ The main files involved are:
 - `openspec/changes/invoice-approval-limits/` — spec, design, and task breakdown
 - `AI_INTERACTION_LOG.jsonl` — structured AI interaction records
 
-## Specification and task evidence
-The assignment requirement is captured in the OpenSpec change package:
-- `openspec/changes/invoice-approval-limits/specs/invoice-approval/spec.md`
-- `openspec/changes/invoice-approval-limits/design.md`
-- `openspec/changes/invoice-approval-limits/tasks.md`
-
-The implemented behavior matches the assignment wording:
+## Implemented behaviour
 - Manager single-approval limit: 50,000 inclusive
 - Director single-approval limit: 500,000 inclusive
-- Amounts above 500,000 require a Manager approval followed by a different Director approval
+- Partial approvals retain the original invoice amount, record the approved amount separately, and require a note
+- Role limits and the two-approver threshold use the approved amount
+- Approved amounts above 500,000 require a Manager approval followed by a different Director approval of the same amount
+- A partial approval is shown separately from a full approval
 - The same user cannot appear as both approvers on the same invoice
 - A rejected attempt returns a clear reason and leaves the invoice unchanged
 
-The existing bulk-approval use case preserves these per-invoice role limits and second-approval checks. For future partial approvals, role limits and the two-approver threshold will use the approved amount. Partial approval is a future use case and is not part of this implementation.
+The existing bulk-approval use case preserves these per-invoice role limits and second-approval checks.
 
 ## Verification commands and evidence
+
+Verification includes the partial-approval implementation. The backend unit suite and Playwright end-to-end suite both pass.
 
 1. Unit tests
 ```bash
@@ -34,7 +33,7 @@ cd ai-sdlc-demo-app
 ~/.dotnet/dotnet test backend/InvoiceApp.sln --nologo --verbosity minimal
 ```
 Result:
-- Passed: 19
+- Passed: 27
 - Failed: 0
 - Skipped: 0
 
@@ -44,8 +43,8 @@ cd ai-sdlc-demo-app/e2e
 PATH=/Users/utkarsh.mahajan/.dotnet:$PATH npm test
 ```
 Result:
-- 1 test run
-- 1 passed
+- 2 tests run
+- 2 passed
 - 0 failed
 The E2E server uses port 5055 because macOS AirTunes already occupies port 5000 on this machine.
 
@@ -67,7 +66,6 @@ The assignment log is maintained at:
 - `AI_INTERACTION_LOG.jsonl`
 
 Prompt and response capture is covered by an interaction test that runs the hook commands against a temporary repository and verifies the appended JSONL record. The log tooling is in:
-- `docs/AI_INTERACTION_LOG.md`
 - `.github/hooks/interaction_log.py`
 - `.github/hooks/test_interaction_log.py`
 

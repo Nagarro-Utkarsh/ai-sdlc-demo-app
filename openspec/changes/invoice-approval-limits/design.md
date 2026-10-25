@@ -8,6 +8,8 @@ See `proposal.md` for motivation and `specs/invoice-approval/spec.md` for the be
 
 **Goals:**
 - Keep approval policy in the Domain service and pass authenticated username and role from the API.
+- Support full and partial approvals while retaining the invoiced amount and the final approved amount separately.
+- Require a note for partial approvals and expose the approval amount and note in the UI.
 - Record a Manager's first high-value approval without finalizing the invoice, then finalize only after a different Director approves.
 - Keep rejected attempts free of partial invoice mutation.
 - Cover each slice with unit tests and add one browser test for a rejected approval.
@@ -19,6 +21,9 @@ See `proposal.md` for motivation and `specs/invoice-approval/spec.md` for the be
 ## Decisions
 
 - Pass both role and username to the Domain approval operation. This keeps role thresholds in the business layer and avoids trusting a role supplied in the request body.
+- Accept an optional approved amount and note on the approval request. An omitted amount means the original invoice amount, preserving full-approval calls. Validate that the amount is positive and does not exceed the original amount; require a note when it is lower.
+- Apply the 50,000 and 500,000 limits and the two-approver threshold to the requested approved amount, not the original invoice amount. A Director may singly approve a partial amount of 500,000 or less even when the original invoice exceeds 500,000.
+- For a high-value approval amount, record the Manager's amount and note with the first approval. Require the distinct Director to confirm the same amount before finalizing. Keep the original amount unchanged and record the final amount in `ApprovedAmount`.
 - Represent approval progress on the invoice with explicit first- and second-approval identity, role, and timestamp fields. Use the authenticated username as the demo app's identity key. Keep final decision fields for completed approve/reject outcomes; for approval, the Director's second approval is the final decision identity/time. A valid rejection after the first approval retains the first-approval fields and records the rejecting user as the final decision identity/time.
 - Validate invoice status, amount, required role, and identity distinctness before changing any approval or decision fields. A failed validation returns the existing service error path without mutation.
 - Above 500,000, stage rules take precedence over the single-approval limits: only a Manager can record the first step, only a different Director can complete it; a Manager above 50,000 through 500,000 and a Director above 500,000 cannot finalize with one approval. Exactly 500,000 is eligible for a single Director approval; 500,000.01 requires both steps.

@@ -1,23 +1,20 @@
 ---
-name: invoice-approval-workflow
-description: "Use when planning, implementing, testing, or reviewing the invoice approval assignment in this repository."
-argument-hint: "The implementation slice or deliverable to work on"
+name: repository-development-workflow
+description: "Use when planning, implementing, testing, or reviewing code changes in this repository."
+argument-hint: "The change or deliverable to work on"
 ---
 
-# Invoice approval assignment workflow
+# Repository development workflow
 
-Use this workflow for the role-limit feature and its assignment evidence. Keep the approved behavior in `openspec/changes/invoice-approval-limits/`; keep repository-wide facts in `AGENTS.md`.
+Use this workflow for repository changes. Read `AGENTS.md` first, then consult the relevant source, tests, and feature documentation. Keep repository-wide conventions in `AGENTS.md` and feature acceptance criteria in the relevant OpenSpec change or use-case brief.
 
-## Work one slice at a time
+## Plan and implement
 
-1. Read the relevant acceptance criteria and current task checklist.
-2. Ask `approval-test-designer` for a focused adversarial test matrix before implementing a non-trivial rule.
-3. Implement only the requested slice. The single-approver thresholds and the >500,000 two-person flow must remain independently reviewable.
-4. Assert complete invoice snapshots for rejected attempts, including approval identities/timestamps and decision fields.
-5. Run the focused tests and `dotnet test backend/InvoiceApp.sln`; report exact commands and results.
-6. Ask `approval-reviewer` to independently review the changed diff. Resolve actionable findings before marking tasks complete.
-7. Update the OpenSpec checklist only after behavior and tests pass. Never claim mutation scores, PR status, a human review, or an uploaded video without evidence.
+1. Identify the relevant acceptance criteria, existing behavior, and affected layers before editing.
+2. Make the smallest complete change that satisfies the request, keeping business rules in the Domain layer and transport or presentation concerns in their existing layers.
+3. Follow the repository conventions and add or update focused tests for new rules and endpoints.
+4. When verification is requested, run the narrowest relevant checks first, then broader checks as appropriate. Report the exact commands and results.
+5. Review the final diff for correctness, authorization, state preservation, documentation accuracy, and unrelated changes.
+6. Update OpenSpec tasks or other progress records only after the corresponding work is complete. Never claim test, mutation, review, or publication evidence that was not observed.
 
-## Assignment deliverables
-
-Use the configured Copilot hooks and agents, preserve the structured interaction log, add one Playwright rejection-flow test, record comparable mutation evidence, and keep `ASSIGNMENT.md` aligned with actual evidence. For human-only work, provide a precise handoff rather than inventing results.
+For approval changes, follow the role limits and state-transition rules in `AGENTS.md` and the relevant invoice approval spec. For other changes, apply the corresponding feature requirements and repository conventions.

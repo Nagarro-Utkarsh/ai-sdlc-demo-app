@@ -24,8 +24,8 @@ These are demo accounts for a local, in-memory app. They are not real credential
 2. Submit it for approval.
 3. A Manager or Director approves it within their limit, or rejects it with a reason.
 
-Managers may singly approve invoices up to 50,000; Directors may singly approve up to 500,000. Invoices above 500,000 require a Manager's approval followed by a different Director's approval.
-Invoices move through Draft, Pending Approval, then Approved or Rejected.
+Managers may singly approve an amount up to 50,000; Directors may singly approve an amount up to 500,000. Approvers may approve less than the invoiced amount with a required note. Invoices with an approved amount above 500,000 require a Manager's approval followed by a different Director's approval of the same amount.
+Invoices move through Draft, Pending Approval, Approved, Partially Approved, or Rejected. The original invoiced amount remains available alongside the approved amount.
 
 For an invoice above 500,000, the first Manager approval leaves it pending and records the first approver. A different Director must provide the second approval to complete it. Rejected approval attempts return a reason without changing invoice state.
 

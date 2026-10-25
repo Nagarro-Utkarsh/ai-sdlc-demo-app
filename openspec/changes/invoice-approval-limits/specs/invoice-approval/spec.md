@@ -6,15 +6,30 @@ Defines role-based invoice approval limits and the required approval checks so u
 
 ## ADDED Requirements
 
+### Requirement: Partial approval amount and note
+The system SHALL retain the original invoice amount and record the approved amount separately. An approval amount SHALL be greater than zero and no greater than the original amount. An approval amount lower than the original amount SHALL require a note. The approved amount and note SHALL be visible with the invoice after approval.
+
+#### Scenario: Partial approval records amount and note
+- **WHEN** an approver approves less than the invoiced amount with a note
+- **THEN** the invoice records both amounts, the note, and a PartiallyApproved status
+
+#### Scenario: Partial approval requires a note
+- **WHEN** an approver submits an amount lower than the invoiced amount without a note
+- **THEN** the attempt is rejected and the invoice remains unchanged
+
+#### Scenario: Invalid approval amount is rejected
+- **WHEN** an approver submits an amount that is zero, negative, or greater than the invoiced amount
+- **THEN** the attempt is rejected and the invoice remains unchanged
+
 ### Requirement: Manager single-approval limit
-The system SHALL allow a Manager to approve a pending invoice with an amount of 50,000 or less using one approval.
+The system SHALL allow a Manager to approve an amount of 50,000 or less using one approval.
 
 #### Scenario: Manager approves at the limit
-- **WHEN** a Manager approves a pending invoice for 50,000
-- **THEN** the invoice is approved
+- **WHEN** a Manager approves a pending invoice for an approved amount of 50,000
+- **THEN** the invoice is approved, or partially approved if the invoiced amount is higher
 
 #### Scenario: Manager attempts a single approval above the limit
-- **WHEN** a Manager attempts to approve a pending invoice for more than 50,000 with one approval
+- **WHEN** a Manager attempts to approve an amount above 50,000 with one approval
 - **THEN** the attempt is rejected with a clear reason and the invoice remains unchanged
 
 #### Scenario: Manager cannot singly approve a mid-value invoice
@@ -22,29 +37,37 @@ The system SHALL allow a Manager to approve a pending invoice with an amount of 
 - **THEN** the attempt is rejected and the invoice remains unchanged
 
 ### Requirement: Director single-approval limit
-The system SHALL allow a Director to approve a pending invoice with an amount of 500,000 or less using one approval.
+The system SHALL allow a Director to approve an amount of 500,000 or less using one approval.
 
 #### Scenario: Director approves at the limit
-- **WHEN** a Director approves a pending invoice for 500,000
-- **THEN** the invoice is approved
+- **WHEN** a Director approves a pending invoice for an approved amount of 500,000
+- **THEN** the invoice is approved, or partially approved if the invoiced amount is higher
 
 #### Scenario: Director attempts a single approval above the limit
-- **WHEN** a Director attempts to approve an invoice above 500,000 without a prior Manager approval
+- **WHEN** a Director attempts to approve an amount above 500,000 without a prior Manager approval
 - **THEN** the attempt is rejected with a clear reason and the invoice remains unchanged
 
-### Requirement: Two approvals for high-value invoices
-The system SHALL require a Manager to record the first approval and a Director with a different authenticated username to record the second approval for an invoice above 500,000 before approving the invoice. The Manager's first approval SHALL leave the invoice pending, and the Director's second approval SHALL complete it.
+### Requirement: Two approvals for high-value approved amounts
+The system SHALL require a Manager to record the first approval and a Director with a different authenticated username to record the second approval when the approved amount is above 500,000. The Manager's first approval SHALL leave the invoice pending and record the approved amount and note. The Director SHALL confirm the same amount before completing approval.
 
 #### Scenario: Manager records the first high-value approval
-- **WHEN** a Manager approves an invoice above 500,000
+- **WHEN** a Manager approves an amount above 500,000
 - **THEN** the invoice remains pending for a second approval and records the Manager as the first approver
 
 #### Scenario: Different Director completes a high-value approval
-- **WHEN** a Director with a different authenticated username records the second approval after a Manager first approval
-- **THEN** the system records the Director identity and approval time, marks the invoice approved, and records the Director and time as the final decision
+- **WHEN** a Director with a different authenticated username confirms the amount recorded by a Manager
+- **THEN** the system records the Director identity and approval time, marks the invoice approved or partially approved according to the two amounts, and records the Director and time as the final decision
+
+#### Scenario: Director can singly approve a partial amount below 500,000
+- **WHEN** a Director approves an amount of 500,000 or less on an invoice whose original amount is above 500,000
+- **THEN** the Director's single approval completes the partial approval
+
+#### Scenario: Director cannot change the amount in the second step
+- **WHEN** a Director submits an amount different from the amount recorded by the Manager
+- **THEN** the attempt is rejected and the invoice remains unchanged
 
 #### Scenario: Manager first approval is not a final decision
-- **WHEN** the first Manager approval is recorded for an invoice above 500,000
+- **WHEN** the first Manager approval is recorded for an approved amount above 500,000
 - **THEN** the invoice remains pending, records the Manager identity and approval time, and leaves final decision fields unset
 
 #### Scenario: First approval is visible as awaiting Director approval
@@ -56,15 +79,15 @@ The system SHALL require a Manager to record the first approval and a Director w
 - **THEN** the attempt is rejected with a clear reason and the invoice remains unchanged
 
 #### Scenario: Non-Director attempts the second approval
-- **WHEN** a non-Director attempts to record the second approval for an invoice above 500,000
+- **WHEN** a non-Director attempts to record the second approval for an approved amount above 500,000
 - **THEN** the attempt is rejected with a clear reason and the invoice remains unchanged
 
 #### Scenario: Director attempts the first approval
-- **WHEN** a Director attempts to record the first approval for an invoice above 500,000
+- **WHEN** a Director attempts to record the first approval for an approved amount above 500,000
 - **THEN** the attempt is rejected with a clear reason and the invoice remains unchanged
 
 #### Scenario: Manager cannot complete the second step
-- **WHEN** a different Manager attempts the second approval for an invoice above 500,000
+- **WHEN** a different Manager attempts the second approval for an approved amount above 500,000
 - **THEN** the attempt is rejected with a clear reason and the invoice remains unchanged
 
 ### Requirement: Rejected approval attempts preserve invoice state

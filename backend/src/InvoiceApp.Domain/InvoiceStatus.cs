@@ -5,5 +5,6 @@ public enum InvoiceStatus
     Draft,
     PendingApproval,
     Approved,
+    PartiallyApproved,
     Rejected
 }

@@ -4,7 +4,7 @@ Invoice approval demo app: ASP.NET Core 8 Web API with a small static web UI.
 
 ## Layout
 
-- `backend/src/InvoiceApp.Domain`: business rules, no web or storage code. `ApprovalService` owns the invoice lifecycle (Draft, PendingApproval, Approved, Rejected).
+- `backend/src/InvoiceApp.Domain`: business rules, no web or storage code. `ApprovalService` owns the invoice lifecycle (Draft, PendingApproval, Approved, PartiallyApproved, Rejected).
 - `backend/src/InvoiceApp.Api`: controllers, sign-in (`Auth/`), in-memory repository, and the web UI under `wwwroot/`.
 - `backend/tests/InvoiceApp.Tests`: xUnit tests, one test class per class under test, named `<ClassUnderTest>Tests`.
 - `e2e`: Playwright end-to-end tests (`tests/`) and page objects (`pages/`).
@@ -12,7 +12,7 @@ Invoice approval demo app: ASP.NET Core 8 Web API with a small static web UI.
 
 ## Conventions
 
-- Approval policy belongs in `InvoiceApp.Domain`: Managers can singly approve up to 50,000; Directors up to 500,000; higher amounts require a Manager first and a different Director second. A rejected approval must leave invoice state unchanged.
+- Approval policy belongs in `InvoiceApp.Domain`: role limits and the 500,000 two-approver threshold apply to the approved amount. Managers can singly approve up to 50,000; Directors up to 500,000; higher approved amounts require a Manager first and a different Director second. Partial approvals retain the invoiced amount and require a note. A rejected approval must leave invoice state unchanged.
 - Controllers live in `Controllers/`, one per resource, route `api/[controller]`. Request bodies are `record` types declared inside the controller.
 - Controllers inherit `ApiControllerBase` and use `Handle(...)` so service errors map to 404, 409 and 400.
 - Every endpoint is behind sign-in. Restrict actions with `[RequireRole("...")]`: destructive actions are Admin only, approval decisions are Manager or Director only, and Admin may reject a pending invoice.

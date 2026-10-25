@@ -18,6 +18,14 @@
 - [x] 3.1 Run `dotnet test backend/InvoiceApp.sln` and the documented Playwright command; verify both results are recorded with the exact commands and outcomes.
 - [x] 3.2 Run the pinned Stryker 4.13.0 mutation command after recording a baseline; verify the before/after scores and surviving mutants are documented.
 
+## 4. Partial Approval
+
+- [x] 4.1 Add separate approved amount, approval note, and partially approved state while preserving the original invoice amount.
+- [x] 4.2 Apply role limits and the two-approver threshold to the approved amount; require the Director to confirm the Manager's amount and preserve rejected attempts without mutation.
+- [x] 4.3 Add approval amount and note inputs and display partial approval details in the UI.
+- [x] 4.4 Add focused unit coverage for amount validation, required notes, role thresholds, two-step amount confirmation, and unchanged state after rejected attempts.
+- [x] 4.5 Add or extend Playwright coverage for submitting and viewing a partial approval.
+
 ## Workflow follow-up
 
 - Archive the OpenSpec change after implementation review and acceptance.
