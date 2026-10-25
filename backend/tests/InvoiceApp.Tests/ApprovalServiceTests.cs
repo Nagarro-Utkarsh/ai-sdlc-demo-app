@@ -400,6 +400,7 @@ public class ApprovalServiceTests
         invoice.ApprovalNote,
         invoice.Status,
         invoice.CreatedAt,
+        invoice.UpdatedAt,
         invoice.FirstApprovalBy,
         invoice.FirstApprovalAt,
         invoice.SecondApprovalBy,

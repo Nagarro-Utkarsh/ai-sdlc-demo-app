@@ -23,7 +23,7 @@ public class ApprovalService
         }
 
         invoice.Status = InvoiceStatus.PendingApproval;
-        _repository.Update(invoice);
+        Save(invoice);
         return invoice;
     }
 
@@ -93,7 +93,7 @@ public class ApprovalService
         invoice.DecidedBy = approver;
         invoice.DecidedAt = DateTime.UtcNow;
         invoice.DecisionNote = reason;
-        _repository.Update(invoice);
+        Save(invoice);
         return invoice;
     }
 
@@ -119,7 +119,7 @@ public class ApprovalService
             invoice.FirstApprovalAmount = amountToApprove;
             invoice.FirstApprovalNote = note;
             invoice.Status = InvoiceStatus.PendingApproval;
-            _repository.Update(invoice);
+            Save(invoice);
             return invoice;
         }
 
@@ -170,6 +170,12 @@ public class ApprovalService
         invoice.DecidedBy = approver;
         invoice.DecidedAt = DateTime.UtcNow;
         invoice.DecisionNote = null;
+        Save(invoice);
+    }
+
+    private void Save(Invoice invoice)
+    {
+        invoice.UpdatedAt = DateTime.UtcNow;
         _repository.Update(invoice);
     }
 

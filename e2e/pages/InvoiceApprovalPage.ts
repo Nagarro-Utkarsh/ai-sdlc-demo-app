@@ -38,9 +38,33 @@ export class InvoiceApprovalPage {
     await invoiceApproval.getByRole('button', { name: /Approve invoice/ }).click();
   }
 
+  async rejectInvoice(customerName: string, reason: string): Promise<void> {
+    const invoiceApproval = this.page.getByRole('listitem').filter({ hasText: customerName });
+    await invoiceApproval.getByLabel(/Rejection reason for/).fill(reason);
+    await invoiceApproval.getByRole('button', { name: /Reject invoice/ }).click();
+  }
+
+  async signOut(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Sign out' }).click();
+    await expect(this.page.getByRole('button', { name: 'Sign in' })).toBeVisible();
+  }
+
+  async expectInvoiceStatus(customerName: string, status: string, approvedAmount?: string): Promise<void> {
+    await this.openInvoicesAfterPause();
+    const invoiceRow = this.page.getByRole('row').filter({ hasText: customerName });
+    await expect(invoiceRow).toContainText(status);
+    if (approvedAmount) await expect(invoiceRow).toContainText(approvedAmount);
+  }
+
+  async openInvoicesAfterPause(): Promise<void> {
+    const pauseMs = Number(process.env.PLAYWRIGHT_SLOW_MO ?? 0);
+    if (pauseMs > 0) await this.page.waitForTimeout(pauseMs);
+    await this.page.getByRole('tab', { name: 'Invoices' }).click();
+  }
+
   async expectRejectedApproval(customerName: string): Promise<void> {
     await expect(this.page.getByRole('alert')).toContainText('Manager cannot approve');
-    await this.page.getByRole('tab', { name: 'Invoices' }).click();
+    await this.openInvoicesAfterPause();
     await expect(this.page.getByRole('row').filter({ hasText: customerName }))
       .toContainText('Pending Approval');
   }

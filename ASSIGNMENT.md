@@ -6,7 +6,7 @@ This repository implements role-based full and partial invoice approvals. The ap
 The main files involved are:
 - `backend/src/InvoiceApp.Domain/ApprovalService.cs` — approval rules and lifecycle transitions
 - `backend/tests/InvoiceApp.Tests/ApprovalServiceTests.cs` — unit tests for limits, approval order, and same-user rejection cases
-- `e2e/tests/approval-rejection.spec.ts` — end-to-end coverage of a rejected over-limit approval
+- `e2e/tests/approval-rejection.spec.ts` — end-to-end coverage of approval limits, partial approval, rejection, and the two-approver workflow
 - `AGENTS.md` — contributor instructions and required workflow expectations
 - `openspec/changes/invoice-approval-limits/` — spec, design, and task breakdown
 - `AI_INTERACTION_LOG.jsonl` — structured AI interaction records
@@ -21,16 +21,16 @@ The main files involved are:
 - The same user cannot appear as both approvers on the same invoice
 - A rejected attempt returns a clear reason and leaves the invoice unchanged
 
-The existing bulk-approval use case preserves these per-invoice role limits and second-approval checks.
+Bulk approval is documented as a separate use case, but is not implemented in this app and is not covered by these tests.
 
 ## Verification commands and evidence
 
-Verification includes the partial-approval implementation. The backend unit suite and Playwright end-to-end suite both pass.
+Verification includes the approval-limit, partial-approval, rejection, and two-approver workflows. The backend unit suite and Playwright end-to-end suite both pass.
 
 1. Unit tests
 ```bash
 cd ai-sdlc-demo-app
-~/.dotnet/dotnet test backend/InvoiceApp.sln --nologo --verbosity minimal
+dotnet test backend/InvoiceApp.sln --nologo --verbosity minimal
 ```
 Result:
 - Passed: 27
@@ -40,12 +40,13 @@ Result:
 2. End-to-end test
 ```bash
 cd ai-sdlc-demo-app/e2e
-PATH=/Users/utkarsh.mahajan/.dotnet:$PATH npm test
+npm test
 ```
 Result:
-- 2 tests run
-- 2 passed
+- 9 tests run
+- 9 passed
 - 0 failed
+- Covers Manager and Director limits, a distinct Manager-then-Director approval, over-limit and invalid-approval state preservation, partial approvals and required notes, and role-based rejection.
 The E2E server uses port 5055 because macOS AirTunes already occupies port 5000 on this machine.
 
 3. API authorization smoke test
@@ -57,7 +58,7 @@ Using the local API at `http://127.0.0.1:5058`, demo-user logins succeeded and t
 4. API build
 ```bash
 cd ai-sdlc-demo-app
-~/.dotnet/dotnet build backend/src/InvoiceApp.Api/InvoiceApp.Api.csproj --nologo --verbosity minimal
+dotnet build backend/src/InvoiceApp.Api/InvoiceApp.Api.csproj --nologo --verbosity minimal
 ```
 Result: build succeeded with 0 warnings and 0 errors.
 

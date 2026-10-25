@@ -39,8 +39,11 @@
 
   async function refresh() {
     const invoices = await api('/invoices');
-    renderInvoices(invoices);
-    renderPending(invoices.filter((i) => i.status === 'PendingApproval'));
+    const newestFirst = [...invoices].sort((first, second) =>
+      Date.parse(second.updatedAt) - Date.parse(first.updatedAt)
+      || second.id.localeCompare(first.id, undefined, { numeric: true }));
+    renderInvoices(newestFirst);
+    renderPending(newestFirst.filter((invoice) => invoice.status === 'PendingApproval'));
   }
 
   function renderInvoices(invoices) {

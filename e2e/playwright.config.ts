@@ -7,6 +7,9 @@ export default defineConfig({
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: 'http://localhost:5055',
+    launchOptions: {
+      slowMo: Number(process.env.PLAYWRIGHT_SLOW_MO ?? 0),
+    },
     trace: 'on-first-retry',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],

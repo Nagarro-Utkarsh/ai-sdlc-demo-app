@@ -9,6 +9,7 @@ public class Invoice
     public string? ApprovalNote { get; set; }
     public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     public string? FirstApprovalBy { get; set; }
     public DateTime? FirstApprovalAt { get; set; }
     public string? SecondApprovalBy { get; set; }
