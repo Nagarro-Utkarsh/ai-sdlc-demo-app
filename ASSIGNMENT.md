@@ -64,12 +64,13 @@ Result: build succeeded with 0 warnings and 0 errors.
 
 5. Mutation testing
 
-Stryker 4.13.0 results recorded for the original `main` baseline and the feature branch:
+Stryker 4.13.0 was run from `backend/tests/InvoiceApp.Tests`, scoped to `ApprovalService.cs`:
 
-| Run | Mutation score | Killed | Survived | No coverage |
-| --- | ---: | ---: | ---: | ---: |
-| Baseline | 60.00% | — | — | — |
-| Feature | 91.23% | 52 | 0 | 5 |
+```bash
+dotnet stryker --project InvoiceApp.Domain.csproj --mutate "**/ApprovalService.cs"
+```
+
+Result: **87.96% mutation score** — 95 killed, 6 survived, 7 no coverage.
 
 ## AI log
 The assignment log is maintained at:
