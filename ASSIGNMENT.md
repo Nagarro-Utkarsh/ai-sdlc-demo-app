@@ -80,4 +80,4 @@ The prompt and response logging hooks are configured in `.github/hooks/interacti
 - `.github/hooks/interaction_log.py`
 
 ## Demo video
-Video link: pending upload in this environment. No valid public upload or verified link was produced here, so this section intentionally avoids inventing a file or URL.
+[nagp-ai-in-sdlc-assignment.mp4](https://nagarro-my.sharepoint.com/:v:/p/utkarsh_mahajan/IQBqPAkS_nGuTLLlLiD-cNPyAR1ACk0giRb1HzH2txszOoY?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=Zle5Ts)
