@@ -61,21 +61,23 @@ cd ai-sdlc-demo-app
 ```
 Result: build succeeded with 0 warnings and 0 errors.
 
+5. Mutation testing
+
+Stryker 4.13.0 results recorded for the original `main` baseline and the feature branch:
+
+| Run | Mutation score | Killed | Survived | No coverage |
+| --- | ---: | ---: | ---: | ---: |
+| Baseline | 60.00% | — | — | — |
+| Feature | 91.23% | 52 | 0 | 5 |
+
 ## AI log
 The assignment log is maintained at:
 - `AI_INTERACTION_LOG.jsonl`
 
-Prompt and response capture is covered by an interaction test that runs the hook commands against a temporary repository and verifies the appended JSONL record. The log tooling is in:
+The prompt and response logging hooks are configured in `.github/hooks/interaction-log.json` and implemented in:
 - `.github/hooks/interaction_log.py`
-- `.github/hooks/test_interaction_log.py`
 
-The logger validation command ran successfully:
-```bash
-cd ai-sdlc-demo-app
-python3 -m unittest discover -s .github/hooks -p 'test_*.py'
-```
-Result: 11 tests ran, all passed.
-The `userPromptSubmitted` hook writes submitted text into each prompt record's `prompt` field after redaction. The `agentStop` hook then reads the completed exchange from the provided transcript path and fills the matching `response` field. Unit tests exercise the prompt and stop events together using transcript-shaped input; live VS Code hook activation remains unverified.
+Live VS Code hook activation remains unverified. The log contains manually recorded interactions where automatic capture was unavailable; those entries are not represented as live hook captures.
 
 ## Demo video
 Video link: pending upload in this environment. No valid public upload or verified link was produced here, so this section intentionally avoids inventing a file or URL.

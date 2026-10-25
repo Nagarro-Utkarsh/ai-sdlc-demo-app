@@ -60,3 +60,4 @@ AGENTS.md                 conventions for AI coding agents
 
 - [UC-1 Bulk invoice approval](docs/use-cases/UC-1-bulk-approval.md)
 - [UC-2 Partial approval](docs/use-cases/UC-2-partial-approval.md)
+- [UC-3 Approval limits by role](docs/use-cases/UC-3-approval-limits-by-role.md)
